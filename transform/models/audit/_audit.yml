@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: audit_ingestion_reconciliation
+    description: Manifest vs. bronze row-count reconciliation, one row per ingested hour.
+    data_tests:
+      - expression_is_true:
+          name: bronze_matches_manifest
+          arguments:
+            expression: "row_count_diff = 0"
+      - expression_is_true:
+          name: reject_rate_within_budget
+          config:
+            severity: warn
+          arguments:
+            expression: "coalesce(reject_rate, 0) <= {{ var('max_reject_rate') }}"

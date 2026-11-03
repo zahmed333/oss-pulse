@@ -1,0 +1,17 @@
+services:
+  dagster:
+    build: .
+    command: dagster dev -h 0.0.0.0 -p 3000 -m oss_pulse.orchestration.definitions
+    ports: ["3000:3000"]
+    environment:
+      OSS_PULSE_SOURCE: ${OSS_PULSE_SOURCE:-synthetic}
+    volumes: ["lake:/data"]
+
+  dashboard:
+    build: .
+    command: streamlit run dashboard/app.py --server.address 0.0.0.0
+    ports: ["8501:8501"]
+    volumes: ["lake:/data"]
+
+volumes:
+  lake:

@@ -1,0 +1,123 @@
+version: 2
+
+models:
+  - name: fct_github_events
+    description: Deduplicated events for tracked repos (incremental, partition-date keyed).
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: repo_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_repos')
+                field: repo_key
+
+  - name: dim_repos
+    description: One row per tracked project, with GitHub + PyPI attributes.
+    columns:
+      - name: repo_key
+        data_tests: [unique, not_null]
+
+  - name: fct_pull_requests
+    description: PR lifecycle (opened -> merged/closed) with time-to-merge.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [repo_key, pr_number]
+      - expression_is_true:
+          arguments:
+            expression: "merged_at is null or merged_at >= opened_at"
+    columns:
+      - name: pull_request_sk
+        data_tests: [unique, not_null]
+      - name: state
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [open, closed, merged]
+      - name: hours_to_merge
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+
+  - name: fct_issues
+    description: Issues with time-to-first-response (first comment by a non-author).
+    columns:
+      - name: issue_sk
+        data_tests: [unique, not_null]
+      - name: hours_to_first_response
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+
+  - name: fct_package_releases
+    columns:
+      - name: release_sk
+        data_tests: [unique, not_null]
+      - name: days_since_previous_release
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+
+  - name: fct_repo_daily_activity
+    description: Zero-filled repo x day activity grid.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [repo_key, activity_date]
+
+  - name: mart_repo_health
+    description: >
+      Daily trailing-window health metrics and a 0-100 composite score per tracked repo.
+      This is the public contract of the project - its schema is enforced.
+    config:
+      contract:
+        enforced: true
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [repo_key, as_of_date]
+    columns:
+      - name: repo_health_sk
+        data_type: varchar
+        constraints: [{ type: not_null }]
+        data_tests: [unique]
+      - name: repo_name
+        data_type: varchar
+        constraints: [{ type: not_null }]
+      - name: repo_key
+        data_type: varchar
+        constraints: [{ type: not_null }]
+      - name: as_of_date
+        data_type: date
+        constraints: [{ type: not_null }]
+      - name: is_window_complete
+        data_type: boolean
+      - name: health_score
+        data_type: double
+        description: Weighted percentile score, 0 (worst) - 100 (best) among tracked repos that day.
+        data_tests:
+          - value_between:
+              arguments: { min_value: 0, max_value: 100 }
+      - { name: stars_7d, data_type: bigint }
+      - { name: forks_7d, data_type: bigint }
+      - { name: pushes_7d, data_type: bigint }
+      - { name: prs_opened_7d, data_type: bigint }
+      - { name: prs_merged_7d, data_type: bigint }
+      - { name: issues_opened_7d, data_type: bigint }
+      - { name: issues_closed_7d, data_type: bigint }
+      - { name: active_contributors_7d, data_type: bigint }
+      - name: bus_factor
+        data_type: bigint
+        description: Fewest contributors accounting for >= 50% of pushes + opened PRs in the window.
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: "bus_factor <= active_contributors_7d"
+      - { name: median_hours_to_merge, data_type: double }
+      - { name: median_hours_to_first_response, data_type: double }
+      - { name: days_since_last_release, data_type: bigint }

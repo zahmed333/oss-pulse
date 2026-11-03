@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Typed, append-once Parquet written by the Python ingestion layer
+      (src/oss_pulse/ingest). Read in place by DuckDB - no load step.
+    tables:
+      - name: gharchive_events
+        description: Every GH Archive event, partitioned by archive hour.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/gharchive/*/*/*.parquet',
+            hive_partitioning = true)
+        loaded_at_field: _ingested_at
+        columns:
+          - name: event_id
+            data_tests: [not_null]
+          - name: event_type
+            data_tests: [not_null]
+
+      - name: gharchive_manifests
+        description: One JSON manifest per ingested hour (row counts, rejects, dupes).
+        meta:
+          external_location: >-
+            read_json('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/_manifests/gharchive/*/*/manifest.json',
+            hive_partitioning = true)
+
+      - name: pypi_releases
+        description: Dated snapshots of PyPI release history for tracked packages.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/pypi_releases/*/*.parquet',
+            hive_partitioning = true)
+
+      - name: tracked_projects
+        description: tracked_projects.yml, published as a table.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/reference/tracked_projects.parquet')
