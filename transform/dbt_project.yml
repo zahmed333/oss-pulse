@@ -1,0 +1,32 @@
+name: oss_pulse
+version: "0.1.0"
+config-version: 2
+profile: oss_pulse
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Trailing window (days) used by rolling health metrics.
+  health_window_days: 7
+  # Max tolerated share of quarantined records per ingested hour before the build fails.
+  max_reject_rate: 0.01
+
+models:
+  oss_pulse:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+    audit:
+      +schema: audit
+      +materialized: view

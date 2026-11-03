@@ -1,0 +1,16 @@
+# The slice of the open-source world we compute health metrics for.
+# Bronze keeps the *entire* GH Archive firehose; the silver/gold layers focus on these.
+# Add a project here and re-run `oss-pulse transform` -- no code changes needed.
+projects:
+  - { repo: duckdb/duckdb,          pypi: duckdb }
+  - { repo: pola-rs/polars,         pypi: polars }
+  - { repo: apache/arrow,           pypi: pyarrow }
+  - { repo: dbt-labs/dbt-core,      pypi: dbt-core }
+  - { repo: dagster-io/dagster,     pypi: dagster }
+  - { repo: apache/airflow,         pypi: apache-airflow }
+  - { repo: pandas-dev/pandas,      pypi: pandas }
+  - { repo: apache/spark,           pypi: pyspark }
+  - { repo: delta-io/delta-rs,      pypi: deltalake }
+  - { repo: apache/iceberg-python,  pypi: pyiceberg }
+  - { repo: great-expectations/great_expectations, pypi: great-expectations }
+  - { repo: PrefectHQ/prefect,      pypi: prefect }

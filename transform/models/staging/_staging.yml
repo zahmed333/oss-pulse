@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: stg_gharchive__events
+    description: Typed GH Archive events (all repos - the full firehose).
+    columns:
+      - name: event_id
+        data_tests: [not_null]
+      - name: created_at
+        data_tests: [not_null]
+      - name: repo_key
+        data_tests: [not_null]
+
+  - name: stg_pypi__releases
+    description: PyPI releases from the most recent snapshot.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [pypi_package, version]
+    columns:
+      - name: pypi_package
+        data_tests: [not_null]
+
+  - name: stg_reference__tracked_projects
+    columns:
+      - name: repo_key
+        data_tests: [unique, not_null]
