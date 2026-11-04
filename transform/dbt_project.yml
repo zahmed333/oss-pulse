@@ -10,6 +10,10 @@ seed-paths: ["seeds"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+flags:
+  # OSS Pulse never phones home, and neither does the dbt it runs (docs/PRIVACY.md).
+  send_anonymous_usage_stats: false
+
 vars:
   # Trailing window (days) used by rolling health metrics.
   health_window_days: 7

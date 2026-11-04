@@ -37,6 +37,31 @@ jobs:
       - name: Unit + end-to-end tests (synthetic data, fully offline)
         run: pytest -v
 
+  wheel-smoke:
+    # Test what users install, not the editable checkout. A fresh install once crashed
+    # because the typosquat list and the dbt project were missing from the wheel.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip wheel --no-deps -w dist .
+      - run: python -m venv "$RUNNER_TEMP/venv" && "$RUNNER_TEMP/venv/bin/pip" install dist/*.whl
+      - name: scan works from the wheel and blocks an auto-run task
+        run: |
+          trap_dir="$RUNNER_TEMP/trap"
+          mkdir -p "$trap_dir/.vscode"
+          echo '{"version":"2.0.0","tasks":[{"label":"x","type":"shell","command":"echo hi","runOptions":{"runOn":"folderOpen"}}]}' > "$trap_dir/.vscode/tasks.json"
+          "$RUNNER_TEMP/venv/bin/oss-pulse" scan . --fail-on high
+          if "$RUNNER_TEMP/venv/bin/oss-pulse" scan "$trap_dir" --fail-on high; then
+            echo "the auto-run task was not blocked"; exit 1
+          fi
+      - name: check runs the dbt project bundled in the wheel
+        run: |
+          "$RUNNER_TEMP/venv/bin/oss-pulse" check pyproject.toml --data-dir "$RUNNER_TEMP/lake" --no-scan-artifacts
+          site=$("$RUNNER_TEMP/venv/bin/python" -c "import oss_pulse, pathlib; print(pathlib.Path(oss_pulse.__file__).parent)")
+          test ! -e "$site/dbt_project/target" && test ! -e "$site/dbt_project/logs"
+
   dbt-and-dagster:
     runs-on: ubuntu-latest
     env:

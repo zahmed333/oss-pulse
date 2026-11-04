@@ -31,6 +31,16 @@ oss-pulse = "oss_pulse.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/oss_pulse"]
 
+# `check` runs the dbt project at runtime, so it ships inside the wheel. Build output
+# (target/, logs/) never does: dbt writes those under the data directory instead.
+[tool.hatch.build.targets.wheel.force-include]
+"transform/dbt_project.yml" = "oss_pulse/dbt_project/dbt_project.yml"
+"transform/profiles.yml" = "oss_pulse/dbt_project/profiles.yml"
+"transform/models" = "oss_pulse/dbt_project/models"
+"transform/macros" = "oss_pulse/dbt_project/macros"
+"transform/tests" = "oss_pulse/dbt_project/tests"
+"tracked_projects.yml" = "oss_pulse/tracked_projects.yml"
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

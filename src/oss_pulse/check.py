@@ -32,7 +32,7 @@ from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name, canonicalize_version
 from packaging.version import InvalidVersion, Version
 
-from oss_pulse.config import PROJECT_ROOT, Settings, TrackedProject
+from oss_pulse.config import Settings, TrackedProject
 from oss_pulse.ingest import github_api, osv, pypi, scorecard
 from oss_pulse.ingest.dependencies import parse_dependency_file, resolve_repo
 from oss_pulse.ingest.io import atomic_write_table
@@ -146,7 +146,7 @@ def run_check(
     gh: github_api.GitHubClient | None = None,
     http: httpx.Client | None = None,
 ) -> CheckResult:
-    settings = Settings(data_dir=data_dir, projects_file=PROJECT_ROOT / "tracked_projects.yml")
+    settings = Settings(data_dir=data_dir)
     today = datetime.now(UTC).date()
     degraded: list[str] = []
     findings: list[Finding] = []
