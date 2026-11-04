@@ -1,5 +1,9 @@
 """Thin wrapper around dbt's programmatic runner so the CLI, tests and the orchestrator
-all invoke dbt the same way (same project dir, profiles dir and data-dir env var)."""
+all invoke dbt the same way (same project dir, profiles dir and data-dir env var).
+
+dbt's build output and logs go under the data directory, never into the project
+directory: an installed package may be read-only, and `check` must not leave
+files behind in site-packages. Anonymous usage stats are off; see docs/PRIVACY.md."""
 
 from __future__ import annotations
 
@@ -21,8 +25,21 @@ def run_dbt(settings: Settings, args: list[str], quiet: bool = False) -> bool:
     dbt_env(settings)
     ensure_bronze_layout(settings)
     project = str(settings.dbt_project_dir)
+    work = settings.data_dir / "dbt"
     flags = ["--quiet"] if quiet else []
     result = dbtRunner().invoke(
-        [*flags, *args, "--project-dir", project, "--profiles-dir", project]
+        [
+            *flags,
+            "--no-send-anonymous-usage-stats",
+            "--log-path",
+            str(work / "logs"),
+            *args,
+            "--project-dir",
+            project,
+            "--profiles-dir",
+            project,
+            "--target-path",
+            str(work / "target"),
+        ]
     )
     return bool(result.success)

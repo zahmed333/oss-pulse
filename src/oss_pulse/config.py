@@ -9,7 +9,14 @@ from pathlib import Path
 
 import yaml
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PACKAGE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_DIR.parents[1]
+
+
+def _shipped(in_package: str, in_checkout: str) -> Path:
+    """Files the wheel carries inside the package; a source checkout keeps them at the root."""
+    packaged = PACKAGE_DIR / in_package
+    return packaged if packaged.exists() else PROJECT_ROOT / in_checkout
 
 
 @dataclass(frozen=True)
@@ -31,10 +38,12 @@ class Settings:
     )
     projects_file: Path = field(
         default_factory=lambda: Path(
-            os.getenv("OSS_PULSE_PROJECTS_FILE", PROJECT_ROOT / "tracked_projects.yml")
+            os.getenv(
+                "OSS_PULSE_PROJECTS_FILE", _shipped("tracked_projects.yml", "tracked_projects.yml")
+            )
         )
     )
-    dbt_project_dir: Path = PROJECT_ROOT / "transform"
+    dbt_project_dir: Path = field(default_factory=lambda: _shipped("dbt_project", "transform"))
 
     @property
     def raw_dir(self) -> Path:
