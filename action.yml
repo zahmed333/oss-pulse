@@ -1,0 +1,110 @@
+name: OSS Pulse supply-chain check
+description: >
+  Scan your repository and your Python dependencies for supply-chain attacks:
+  malicious or typosquatted packages, hijacked releases, vulnerable versions,
+  abandoned projects, auto-running payloads and unsafe CI workflows.
+branding:
+  icon: shield
+  color: orange
+
+inputs:
+  dependency-file:
+    description: pyproject.toml or requirements*.txt to check ('' to skip the dependency check)
+    default: pyproject.toml
+  scan-path:
+    description: Folder to statically scan ('' to skip the repository scan)
+    default: .
+  fail-on:
+    description: Fail the job at this risk level or above (critical | high | medium | never)
+    default: high
+  internal-packages:
+    description: Newline- or comma-separated private package names (dependency-confusion guard)
+    default: ""
+  days:
+    description: Activity window in days for maintenance signals
+    default: "90"
+  comment:
+    description: Post / update a PR comment with the report
+    default: "true"
+  github-token:
+    description: Token for GitHub API reads (higher rate limit) and PR comments
+    default: ${{ github.token }}
+  python-version:
+    default: "3.12"
+
+outputs:
+  report:
+    description: Path to the combined Markdown report
+    value: ${{ steps.run.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install OSS Pulse
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: python -m pip install --quiet "$ACTION_PATH"
+
+    - name: Run checks
+      id: run
+      shell: bash
+      # Inputs are passed through env vars, never interpolated into the script (GHA-INJECT).
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        DEP_FILE: ${{ inputs.dependency-file }}
+        SCAN_PATH: ${{ inputs.scan-path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        INTERNAL: ${{ inputs.internal-packages }}
+        DAYS: ${{ inputs.days }}
+      run: |
+        set +e
+        out="$RUNNER_TEMP/oss-pulse"; mkdir -p "$out"
+        status=0
+        if [ -n "$SCAN_PATH" ]; then
+          oss-pulse scan "$SCAN_PATH" --fail-on "$FAIL_ON" \
+            --markdown "$out/scan.md" --json "$out/scan.json" > /dev/null || status=1
+        fi
+        if [ -n "$DEP_FILE" ] && [ -f "$DEP_FILE" ]; then
+          args=()
+          for name in $(echo "$INTERNAL" | tr ',' ' '); do args+=(--internal "$name"); done
+          oss-pulse check "$DEP_FILE" --days "$DAYS" --fail-on "$FAIL_ON" "${args[@]}" \
+            --data-dir "$out/lake" --markdown "$out/check.md" --json "$out/check.json" \
+            > /dev/null || status=1
+        fi
+        cat "$out"/check.md "$out"/scan.md 2>/dev/null > "$out/report.md"
+        cat "$out/report.md" >> "$GITHUB_STEP_SUMMARY"
+        echo "report=$out/report.md" >> "$GITHUB_OUTPUT"
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+
+    - name: Comment on pull request
+      if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      env:
+        REPORT: ${{ steps.run.outputs.report }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const marker = '<!-- oss-pulse-report -->';
+          let body = fs.readFileSync(process.env.REPORT, 'utf8');
+          if (!body.includes(marker)) body = marker + '\n' + body;
+          if (body.length > 65000) body = body.slice(0, 65000) + '\n\n_(truncated - see job summary)_';
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          const comments = await github.paginate(github.rest.issues.listComments,
+                                                 { owner, repo, issue_number });
+          const mine = comments.find(c => c.body && c.body.includes(marker));
+          if (mine) await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });
+          else await github.rest.issues.createComment({ owner, repo, issue_number, body });
+
+    - name: Enforce fail-on
+      if: steps.run.outputs.status != '0'
+      shell: bash
+      run: |
+        echo "::error::OSS Pulse found supply-chain risk at or above the fail-on level. See the job summary."
+        exit 1

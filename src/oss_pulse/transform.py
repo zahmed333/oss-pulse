@@ -13,10 +13,16 @@ def dbt_env(settings: Settings) -> None:
     settings.data_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_dbt(settings: Settings, args: list[str]) -> bool:
+def run_dbt(settings: Settings, args: list[str], quiet: bool = False) -> bool:
     from dbt.cli.main import dbtRunner
 
+    from oss_pulse.ingest.layout import ensure_bronze_layout
+
     dbt_env(settings)
+    ensure_bronze_layout(settings)
     project = str(settings.dbt_project_dir)
-    result = dbtRunner().invoke([*args, "--project-dir", project, "--profiles-dir", project])
+    flags = ["--quiet"] if quiet else []
+    result = dbtRunner().invoke(
+        [*flags, *args, "--project-dir", project, "--profiles-dir", project]
+    )
     return bool(result.success)

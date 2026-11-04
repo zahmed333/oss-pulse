@@ -15,6 +15,16 @@ vars:
   health_window_days: 7
   # Max tolerated share of quarantined records per ingested hour before the build fails.
   max_reject_rate: 0.01
+  # Dependency risk thresholds (mart_dependency_risk). Override per run with --vars.
+  risk_stale_release_days: 365      # no PyPI release for this long -> high
+  risk_inactive_days: 180           # no commits for this long -> high
+  risk_slow_response_hours: 720     # median time to first issue response above this -> medium
+  risk_min_prs_for_merge_check: 5   # this many PRs opened and none merged -> medium
+  risk_new_package_days: 90         # first PyPI release younger than this -> medium
+  risk_min_scorecard: 4.0           # OpenSSF Scorecard overall score below this -> medium
+  risk_release_cooldown_days: 7     # resolved version younger than this -> medium (REL-001)
+  risk_dormancy_days: 365           # gap before the resolved release longer than this...
+  risk_dormancy_recent_days: 90     # ...and the release itself is this recent (REL-002)
 
 models:
   oss_pulse:

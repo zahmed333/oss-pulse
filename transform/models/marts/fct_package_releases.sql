@@ -14,4 +14,5 @@ select
         r.uploaded_date
     )                                                                               as days_since_previous_release
 from {{ ref('stg_pypi__releases') }} r
-join {{ ref('stg_reference__tracked_projects') }} p using (pypi_package)
+-- left join: a repo can publish several packages; keep releases of all of them
+left join {{ ref('stg_reference__tracked_projects') }} p using (pypi_package)

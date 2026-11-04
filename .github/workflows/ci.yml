@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -45,6 +48,8 @@ jobs:
       - run: pip install -e ".[dev,orchestration]"
       - name: Full pipeline demo
         run: oss-pulse demo --days 10
+      - name: Scan this repository for supply-chain red flags
+        run: oss-pulse scan . --fail-on high
       - name: Validate Dagster definitions
         run: dagster definitions validate -m oss_pulse.orchestration.definitions
       - name: Build dbt docs (lineage + catalog)

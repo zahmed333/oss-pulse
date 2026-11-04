@@ -1,0 +1,6 @@
+# Detector source files contain the patterns they detect.
+src/oss_pulse/supplychain/code_scan.py
+src/oss_pulse/supplychain/rules.py
+# Test fixtures deliberately contain (inert) malicious-looking samples.
+tests/fakes.py
+tests/test_supply_chain.py

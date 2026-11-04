@@ -1,12 +1,54 @@
 # Roadmap
 
-The core pipeline works end to end. Each milestone below adds one skill that data engineering
-hiring managers look for. Do them in order, open a GitHub issue for each one, and ship each as
-its own PR with a clear description. A visible PR history is part of the portfolio.
+OSS Pulse already detects supply-chain risk in Python dependencies and untrusted
+repositories (see README). Each milestone below adds one capability *and* one skill that
+data/security engineering hiring managers look for. Open a GitHub issue for each and ship
+it as its own PR - a visible PR history is part of the portfolio.
 
 Status key: ⬜ todo · 🟨 in progress · ✅ done
 
 ---
+
+## Milestone 0: Ship it and get real users ⬜
+*Skills: product sense, communication - this matters more than any feature below*
+
+- [ ] Push to GitHub, enable the dogfooding workflow, cut a `v0.1.0` release and tag.
+- [ ] Publish to PyPI **with Trusted Publishing** (practise what PROV-001 preaches).
+- [ ] Run `oss-pulse check` against 20 popular open-source projects' requirements and
+      write up what you found (responsibly - report real issues privately first).
+- [ ] Post the write-up (blog, LinkedIn, r/Python, Hacker News). Link it in the README.
+
+## Milestone S1: Lockfiles and transitive dependencies ⬜
+*Skills: graph data modelling*
+
+- [ ] Parse `uv.lock`, `poetry.lock` and `pip-compile` output with exact pinned versions.
+- [ ] Model the dependency graph (`dim_packages`, `bridge_dependency_edges`) and report
+      *paths*: "your app → libA → evil-lib". Most real compromises arrive transitively.
+- [ ] Diff mode for PRs: only report packages whose resolved version changed.
+
+## Milestone S2: More detectors ⬜
+*Skills: security research, precision/recall evaluation*
+
+- [ ] **Maintainer change** detection: snapshot PyPI ownership daily (bronze history) and
+      flag new owners shortly before a release - the account-takeover precursor.
+- [ ] **Starjacking**: verify the linked repo actually contains this package
+      (compare its `pyproject.toml` name).
+- [ ] **sdist vs. git diff**: compare files in the release with the git tag
+      (catches Ultralytics-style build injection directly).
+- [ ] **npm ecosystem**: `package.json`/`package-lock.json` support (Shai-Hulud class).
+- [ ] Build an evaluation set from the OpenSSF malicious-packages dataset + top-1000
+      benign packages; publish precision/recall per rule in `docs/benchmarks.md`.
+
+## Milestone S3: Continuous monitoring ⬜
+*Skills: streaming, alerting, SLAs*
+
+- [ ] Watch PyPI's new-release feed and re-check affected dependencies within minutes.
+- [ ] Alert (Slack/email/GitHub issue) when a dependency's risk level increases.
+- [ ] Track rule hit-rates and false-positive reports over time in the warehouse.
+
+---
+
+# Ecosystem analytics track (original lakehouse)
 
 ## Milestone 1: Real data at real scale ⬜
 *Skills: performance, backfills, working with messy production data*
@@ -85,6 +127,7 @@ Status key: ⬜ todo · 🟨 in progress · ✅ done
 ### How to talk about this in an interview
 
 Be ready to whiteboard these:
+0. *"Walk me through how your tool would have caught the Ultralytics compromise."* (PROV-001, REL-003, artifact scan; and what it would have missed)
 1. *"What happens if the job dies halfway through writing an hour?"* (atomic rename, manifests, reconciliation)
 2. *"A file arrives late, or GH Archive republishes an hour. What do you do?"* (idempotent partitions, `delete+insert` incremental)
 3. *"GitHub changes the payload schema tomorrow. What breaks?"* (nothing in bronze; dbt tests flag the gap)
