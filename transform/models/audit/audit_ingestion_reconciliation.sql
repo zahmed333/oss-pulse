@@ -11,6 +11,7 @@ with manifests as (
         rows_duplicate,
         cast(ingested_at as timestamptz) as ingested_at
     from {{ source('bronze', 'gharchive_manifests') }}
+    where source_file <> '_placeholder'  -- written by ingest/layout.py when unused
 ),
 
 actual as (

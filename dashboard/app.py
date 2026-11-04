@@ -24,12 +24,12 @@ latest = health[health.as_of_date == health.as_of_date.max()].sort_values(
 )
 
 st.title("OSS Pulse - open-source ecosystem health")
-st.caption(f"As of {latest.as_of_date.iloc[0]:%Y-%m-%d} · trailing 7-day window")
+st.caption(f"As of {latest.as_of_date.iloc[0]:%Y-%m-%d} · trailing window")
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Tracked repos", len(latest))
-c2.metric("Stars (7d)", int(latest.stars_7d.sum()))
-c3.metric("PRs merged (7d)", int(latest.prs_merged_7d.sum()))
+c2.metric("Stars (window)", int(latest.stars_in_window.sum()))
+c3.metric("PRs merged (window)", int(latest.prs_merged_in_window.sum()))
 c4.metric("Repos with bus factor 1", int((latest.bus_factor == 1).sum()))
 
 st.subheader("Health leaderboard")
@@ -38,8 +38,8 @@ st.dataframe(
         [
             "repo_name",
             "health_score",
-            "stars_7d",
-            "prs_merged_7d",
+            "stars_in_window",
+            "prs_merged_in_window",
             "median_hours_to_merge",
             "median_hours_to_first_response",
             "bus_factor",

@@ -1,0 +1,26 @@
+# Dogfooding: OSS Pulse checks its own repository and dependencies on every PR,
+# and weekly (new advisories and hijacks appear without any change on our side).
+name: supply-chain
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  oss-pulse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        with:
+          dependency-file: pyproject.toml
+          scan-path: .
+          fail-on: critical

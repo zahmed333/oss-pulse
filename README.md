@@ -1,193 +1,158 @@
 # OSS Pulse
 
-**An open-source lakehouse that measures the health of open-source projects.**
+**Catch supply-chain attacks in your Python dependencies, and in any repo you're about to open, before they run.**
 
-OSS Pulse ingests the public [GH Archive](https://www.gharchive.org/) firehose (every public
-GitHub event, published hourly) and the PyPI release API. It lands them as typed Parquet,
-models them with dbt on DuckDB, and publishes daily health metrics for a configurable set of
-projects: time-to-merge, time-to-first-response, bus factor, release cadence, and a composite
-health score.
+Recent attacks have reached developers through:
 
-It runs on a laptop in about 30 seconds, needs no cloud account, and runs fully offline in CI.
+- hijacked maintainer accounts publishing poisoned new versions of trusted packages (the Shai-Hulud worm, the Qix npm phishing takeover, Nx)
+- malicious code that existed **only in the PyPI release** and never in git (Ultralytics)
+- mutable CI tags (tj-actions)
+- fake job-interview "coding assignments" that run malware the moment you open the folder (Contagious Interview). Binance's 2026 incident reportedly involved this kind of developer-machine entry point.
+
+OSS Pulse looks for the traces those attacks leave. It is a data pipeline: it collects signals from PyPI, GitHub, OSV.dev, OpenSSF Scorecard and the release files themselves, models them with dbt on DuckDB, and gives you an explainable risk report and a CI gate.
+
+```bash
+pip install git+https://github.com/<you>/oss-pulse
+
+oss-pulse scan ./take-home-assignment     # inspect an untrusted repo BEFORE opening it
+oss-pulse check requirements.txt          # supply-chain risk of your dependencies
+oss-pulse rules                           # every rule, why it matters, which attack used it
+```
+
+## What it detects
+
+### `oss-pulse check`: your dependencies
+
+| Question | Signals | Source |
+|---|---|---|
+| **Is it known-bad?** | Known malicious package (`MAL-` advisories), vulnerable resolved version, a version range that still allows vulnerable versions | OSV.dev |
+| **Is it impersonating something?** | Typosquats (`reqeusts`, `python-dateutils`), affix squats (`requests-py`), dependency confusion for your internal names, brand-new packages | Top-15k PyPI list, PyPI |
+| **Was this release hijacked?** | Trusted-Publishing provenance **lost** compared with the previous release; provenance from a **different repo**; release only hours old; release after long dormancy; no matching git tag | PyPI Integrity API (PEP 740), PyPI, GitHub |
+| **Does the release contain malware?** | Static scan of the actual sdist and wheel: install-time network calls in `setup.py`, executable `.pth` files, `exec(b64decode(...))`, env-var dumps, credential and crypto-wallet theft, Discord/Telegram exfiltration, clipboard hijackers | PyPI files (verified by SHA-256) |
+| **Is it likely to become a problem?** | Archived repo, no commits, stale releases, bus factor 1, unanswered issues, unmerged PRs, dangerous CI workflows / low OpenSSF Scorecard | GitHub API, OpenSSF Scorecard |
+
+### `oss-pulse scan`: an untrusted folder (no network, nothing executed)
+
+- **Auto-run on open:** `.vscode/tasks.json` with `runOn: folderOpen`, or workspace settings that enable automatic tasks. This is the Contagious Interview delivery method.
+- **Run on install:** npm `preinstall`/`postinstall` hooks, especially ones that fetch remote code; `setup.py` side effects; `.pth` files; committed git hooks.
+- **Hidden payloads:** obfuscated JS/Python, code pushed off-screen with whitespace, scripts disguised as `.png`/`.woff` files, binaries.
+- **Stealers:** wallet and browser data access, environment dumps, exfiltration endpoints.
+- **Typosquatted dependencies** in `requirements.txt` / `pyproject.toml`.
+- **Unsafe GitHub Actions:** `pull_request_target` with a PR checkout (Nx), `${{ github.event.* }}` injection in `run:` (Ultralytics), actions not pinned to a commit SHA (tj-actions), caches in release jobs.
+
+Every finding comes with a rule ID, the file and line, an evidence snippet, and the real attack that used the technique. The full catalogue is in [docs/RULES.md](docs/RULES.md).
+
+### Example (synthetic scenario from the test suite)
 
 ```
-┌───────────────────────────────────────┬────────────┬──────────────┬──────────┬───────────────┬───────────────────────┬────────────────────────────────┬────────────┐
-│               repo_name               │ as_of_date │ health_score │ stars_7d │ prs_merged_7d │ median_hours_to_merge │ median_hours_to_first_response │ bus_factor │
-├───────────────────────────────────────┼────────────┼──────────────┼──────────┼───────────────┼───────────────────────┼────────────────────────────────┼────────────┤
-│ delta-io/delta-rs                     │ 2026-11-02 │         70.5 │      386 │            79 │                  11.4 │                            5.4 │          3 │
-│ dagster-io/dagster                    │ 2026-11-02 │         65.5 │      461 │            95 │                 10.72 │                           4.87 │          1 │
-│ apache/iceberg-python                 │ 2026-11-02 │         63.6 │      451 │           104 │                10.90 │                           5.11 │          1 │
-│ …                                     │            │              │          │               │                       │                                │            │
-└───────────────────────────────────────┴────────────┴──────────────┴──────────┴───────────────┴───────────────────────┴────────────────────────────────┴────────────┘
+| | Package      | Version | Why                                                                |
+|---|------------|---------|--------------------------------------------------------------------|
+| 🔴 | corp-utils | –       | CONF-001: Internal package name exists on public PyPI               |
+| 🔴 | evil-lib   | 0.2     | OSV-MAL: Known malicious package                                   |
+| 🟠 | hijacked-lib | 3.0   | CODE-EXFIL, CODE-OBF, CODE-PTH, CODE-SETUP, PROV-001: provenance     |
+|    |            |         | disappeared, REL-001: very recent release, REL-002: after 500 days  |
+|    |            |         | of dormancy, REL-003: no matching git tag                          |
+| 🟠 | reqeusts   | 0.0.1   | TYPO-001: one edit away from 'requests'; first published 5 days ago |
+| 🟡 | range-lib  | 2.0     | OSV-RANGE: `range-lib>=1.0` still allows a vulnerable version       |
+| 🟢 | healthy-lib | 1.5.0 🔏 | –                                                                |
 ```
-<sub>Output of `oss-pulse demo` (synthetic data). Run against real GH Archive hours for real numbers.</sub>
+
+## Use it in CI
+
+```yaml
+- uses: actions/checkout@v4
+- uses: <you>/oss-pulse@<commit-sha>
+  with:
+    dependency-file: requirements.txt
+    fail-on: high
+    internal-packages: acme-auth, acme-utils
+```
+
+It posts one PR comment that is updated on each push. Run it weekly as well, because new advisories and hijacks appear without any change on your side. See [docs/github-action.md](docs/github-action.md). This repository runs it on itself ([`supply-chain.yml`](.github/workflows/supply-chain.yml)).
 
 ---
 
-## Architecture
+## How it works (the data engineering)
 
 ```mermaid
 flowchart LR
     subgraph Sources
-        GHA[GH Archive<br/>hourly .json.gz]
-        PYPI[PyPI JSON API]
-        CFG[tracked_projects.yml]
+        DEP[pyproject.toml /<br/>requirements.txt]
+        PYPI[PyPI JSON +<br/>Integrity API]
+        FILES[release sdists/wheels]
+        GH[GitHub REST API]
+        OSV[OSV.dev]
+        SC[OpenSSF Scorecard]
+        GHA[GH Archive<br/>hourly firehose]
     end
 
-    subgraph "Ingestion (Python)"
-        DL[download + cache<br/>retries / backoff]
-        PARSE[stream-parse<br/>validate · dedupe]
-        Q[(quarantine<br/>rejects.jsonl)]
-        M[(manifests<br/>row counts)]
+    subgraph "Ingestion + detectors (Python)"
+        RES[resolve package → repo,<br/>resolved version, allowed range]
+        DET[detectors: typosquat · provenance ·<br/>artifact malware scan · repo scan]
+        API[GitHub snapshot →<br/>GH Archive event contract]
+        GHAI[stream-parse · dedupe ·<br/>quarantine · manifests]
     end
 
-    subgraph "Bronze (Parquet, hive-partitioned)"
-        B1[(gharchive/<br/>event_date=/event_hour=)]
-        B2[(pypi_releases/<br/>snapshot_date=)]
-        B3[(reference/)]
+    subgraph "Bronze (Parquet, partitioned, immutable raw zone)"
+        B[(events · repos · releases ·<br/>advisories · scorecards ·<br/>dependencies · findings)]
     end
 
     subgraph "dbt on DuckDB"
-        STG[staging<br/>typed views]
-        INT[intermediate<br/>payload extraction]
-        MART[marts<br/>facts · dims · health]
-        AUD[audit<br/>reconciliation]
+        STG[staging] --> INT[intermediate<br/>unified events, release rules]
+        INT --> F[fct_supply_chain_findings<br/>fct_pull_requests · fct_issues ...]
+        F --> M[mart_dependency_risk<br/>mart_repo_health]
     end
 
-    GHA --> DL --> PARSE --> B1
-    PARSE --> Q
-    PARSE --> M
-    PYPI --> B2
-    CFG --> B3
-    B1 & B2 & B3 --> STG --> INT --> MART
-    M --> AUD
-    STG --> AUD
-    MART --> DASH[Streamlit dashboard]
-    MART --> CLI[oss-pulse report]
-
-    ORCH{{Dagster: hourly partitions,<br/>schedules, asset checks}} -.-> DL
-    ORCH -.-> STG
+    DEP --> RES
+    PYPI --> RES & DET
+    FILES --> DET
+    GH --> API
+    GHA --> GHAI
+    RES & DET & API & GHAI --> B
+    OSV & SC --> B
+    B --> STG
+    M --> R[Markdown/JSON report · PR comment ·<br/>CI exit code · Streamlit · Dagster]
 ```
 
-| Layer | Tech | What it does |
+| Layer | Tech | Highlights |
 |---|---|---|
-| Ingestion | Python, httpx, PyArrow | Streams each hourly archive into one Parquet partition with bounded memory. Bad records go to quarantine, duplicates are dropped, and every partition gets a manifest. |
-| Storage | Parquet + zstd, Hive partitioning | Bronze is the source of truth. DuckDB queries it in place, with no load step. |
-| Transform | dbt-core + dbt-duckdb | Staging → intermediate → marts. Incremental facts, an enforced model contract, and 35 data tests. |
-| Orchestration | Dagster | Software-defined assets. Hourly partitions map 1:1 to GH Archive files, so a backfill is a range selection in the UI. dbt tests run as asset checks. |
-| Quality | dbt tests, reconciliation, pytest | Manifest-vs-lake reconciliation, a reject-rate budget, referential integrity, and an end-to-end test on synthetic data. |
-| Serving | Streamlit, CLI | Leaderboard, per-repo trends, PR drill-down. |
-| CI | GitHub Actions | Lint, a test matrix on Python 3.11 to 3.13, a full pipeline run, Dagster validation, and dbt docs as a build artifact. |
+| Ingestion | Python, httpx, PyArrow | Two ingestion paths (GH Archive firehose, GitHub REST API) write **one bronze event contract**. Raw API responses are cached in an immutable raw zone, so re-runs make zero requests and every row traces back to the response it came from. |
+| Detectors | Python AST + regex | Never execute untrusted code. Archives are read in memory (no extraction, no symlinks), downloads are verified against PyPI's SHA-256, and size limits are enforced. Rules were tuned on real packages: `requests`, `urllib3` and `pyyaml` produce no false positives. |
+| Storage | Parquet + zstd, Hive partitions | Atomic writes, idempotent partitions, per-partition manifests, quarantine for bad records. |
+| Transform | dbt-core + dbt-duckdb | 26 models and 50 data tests, an incremental fact with late-data handling, an enforced contract on the public health mart, and reconciliation of lake contents against manifests. Thresholds are dbt vars. |
+| Orchestration | Dagster | Hourly-partitioned GH Archive assets for the ecosystem pipeline; dbt models as assets, dbt tests as asset checks. |
+| Quality | pytest (50 tests) | An offline end-to-end test runs every detector against a fake internet with one fictional package per attack pattern, and asserts zero findings on the benign one. |
+| CI/CD | GitHub Actions | Lint, a test matrix on Python 3.11 to 3.13, the full pipeline, a composite Action, and dogfooding on its own repo. |
 
-## Quickstart
+### Engineering decisions worth discussing
+
+- **Degrade loudly, never silently.** If GitHub, OSV or Scorecard is unreachable the check still runs, and the report says exactly which signal is missing ("GitHub not reachable" is never reported as "repository not found"). `--strict` turns any missing signal into a CI failure.
+- **Precision over recall on popular code.** A noisy security tool gets switched off. Rules that legitimate libraries trigger (reading `~/.aws/credentials`, `dict(os.environ)` for subprocesses, `cmdclass` for C extensions) only fire in combination with stronger signals, or at low severity. Tests and docs inside release artifacts are skipped, because pip neither installs nor runs them.
+- **Scan what pip installs, not what GitHub shows.** In the Ultralytics attack the malicious code was only in the PyPI artifact, so the scanner downloads the real sdist and wheel.
+- **Absolute, explainable rules.** Every risk level comes with reasons a human can verify. There is no opaque score.
+- **One findings contract.** Python detectors, OSV advisories and SQL release rules all land in `fct_supply_chain_findings`, so adding a detector requires no reporting changes.
+
+### Also included: ecosystem health analytics
+
+The same lakehouse can ingest the full GH Archive firehose and track the health of any set of projects over time (`oss-pulse demo`, `make dashboard`, `make dagster`). This is the original batch pipeline with hourly partitions, backfills, a contract-enforced daily health mart, and a Streamlit dashboard.
+
+## Development
 
 ```bash
-git clone https://github.com/<you>/oss-pulse && cd oss-pulse
 python -m venv .venv && source .venv/bin/activate
-make install
-
-make demo        # synthetic data → bronze → dbt build → leaderboard  (offline, ~30s)
-make dashboard   # http://localhost:8501
-make dagster     # http://localhost:3000  (asset graph, partitions, backfills)
-make docs        # http://localhost:8080  (dbt lineage graph)
+make install      # editable install with dev, orchestration and dashboard extras
+make test         # 50 tests, fully offline
+make demo         # ecosystem pipeline on synthetic GH Archive data
+oss-pulse check pyproject.toml -v
 ```
 
-### Real data
+Set `GITHUB_TOKEN` for 5,000 GitHub API requests per hour (60 without one).
 
-```bash
-make ingest START=2026-10-01T00 END=2026-10-02T00   # 24 GH Archive hours (a few GB to download)
-make transform && make report
-```
+## Limitations (honest ones)
 
-Or with Docker:
-
-```bash
-docker compose up   # Dagster on :3000, dashboard on :8501
-```
-
-To track a different set of projects, edit [`tracked_projects.yml`](tracked_projects.yml) and
-run `make transform`. No code changes are needed: bronze keeps the full firehose, and the
-filtering happens in dbt.
-
-## Data model
-
-```mermaid
-erDiagram
-    dim_repos ||--o{ fct_github_events : has
-    dim_repos ||--o{ fct_pull_requests : has
-    dim_repos ||--o{ fct_issues : has
-    dim_repos ||--o{ fct_package_releases : publishes
-    dim_repos ||--o{ fct_repo_daily_activity : "daily grid"
-    dim_repos ||--o{ mart_repo_health : "daily score"
-```
-
-| Model | Grain | Notes |
-|---|---|---|
-| `fct_github_events` | event | Incremental (`delete+insert` on partition date), deduplicated across hours |
-| `fct_pull_requests` | repo × PR | Lifecycle and `hours_to_merge`. Handles PRs opened before the loaded window. |
-| `fct_issues` | repo × issue | `hours_to_first_response` = first comment by someone other than the author |
-| `fct_package_releases` | package × version | Release cadence (`days_since_previous_release`) |
-| `fct_repo_daily_activity` | repo × day | Zero-filled date spine, so days with no activity don't silently drop out of averages |
-| `mart_repo_health` | repo × day | **Contract-enforced** public interface. Trailing 7-day metrics plus the score. |
-| `audit_ingestion_reconciliation` | ingested hour | Manifest row counts vs. rows actually in the lake |
-
-### Metric definitions
-
-- **Bus factor**: the smallest number of contributors who account for at least 50% of pushes and opened PRs in the window.
-- **Median hours to merge**: over PRs merged in the window.
-- **Median hours to first response**: over issues that received their first non-author comment in the window.
-- **Health score (0 to 100)**: a weighted percentile rank against the other tracked repos on the same day. Weights: stars 20%, merged PRs 20%, merge latency 15%, response latency 15%, bus factor 20%, release recency 10%. Latency metrics are inverted, so lower is better. Missing values rank worst; they are never dropped.
-
-## Engineering decisions
-
-**Idempotent by construction.** The unit of work is one archive hour, which writes one
-partition. Writes go to a temp file followed by `os.replace`, so a crashed job never leaves a
-half-written partition, and re-running an hour overwrites it instead of appending. This is
-tested in `tests/test_gharchive.py`.
-
-**Bronze stores JSON payloads as text.** GitHub changes event payloads over time. Storing
-`payload` as raw JSON means upstream drift can't break ingestion. Field extraction happens in
-dbt (`int_*` models), where it can be seen and tested, and missing fields are handled with
-`try_cast` and `coalesce`.
-
-**Quarantine, don't crash.** Malformed lines and contract violations are written to
-`_quarantine/…/rejects.jsonl` with a reason. A dbt test fails the build when an hour's reject
-rate exceeds a budget (`max_reject_rate`, set in `dbt_project.yml`).
-
-**Reconciliation.** Each partition writes a manifest with read, written, rejected and
-duplicate counts. `audit_ingestion_reconciliation` compares the manifests with what is
-actually in the lake, which catches partial writes and manual tampering.
-
-**Incremental with late-data tolerance.** `fct_github_events` reprocesses everything from the
-latest loaded partition date forward, using `delete+insert`. Re-landing an hour or receiving a
-late file needs no full refresh. This is tested in `tests/test_pipeline_e2e.py`.
-
-**Synthetic data in the real format.** `oss_pulse.ingest.synthetic` writes byte-compatible GH
-Archive `.json.gz` files, with dirty records injected on purpose. They go through the same
-code path as production data, so CI checks the real pipeline end to end, offline, in seconds.
-
-**No dbt package dependencies.** Surrogate keys and generic tests (`expression_is_true`,
-`value_between`, `unique_combination`) are small local macros.
-
-## Project layout
-
-```
-src/oss_pulse/
-  ingest/gharchive.py     download → stream-parse → bronze partition (+ quarantine, manifest)
-  ingest/pypi.py          PyPI snapshots + reference table
-  ingest/synthetic.py     deterministic GH Archive-format test data
-  ingest/schema.py        Arrow contracts for bronze
-  orchestration/          Dagster assets, partitions, schedules
-  cli.py                  `oss-pulse` CLI
-transform/                dbt project (staging / intermediate / marts / audit)
-dashboard/app.py          Streamlit
-tests/                    unit + end-to-end
-```
-
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md). It is a staged plan to take this from a laptop lakehouse to a
-cloud-scale platform.
+- It is static analysis plus metadata. A determined attacker can evade heuristics, so treat a clean report as "no known red flags", not "safe".
+- It covers Python dependencies and repository contents. It does not check Homebrew, npm dependency trees, IDE extensions, or what is already running on your machine.
+- Only direct dependencies are checked; lockfile and transitive support is on the [roadmap](ROADMAP.md).
 
 ## License
 

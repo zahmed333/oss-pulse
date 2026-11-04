@@ -38,3 +38,48 @@ sources:
         meta:
           external_location: >-
             read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/reference/tracked_projects.parquet')
+
+      - name: github_api_events
+        description: >
+          Per-repo activity snapshots from the GitHub REST API, translated into the
+          GH Archive event contract (same columns as gharchive_events).
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/github_api/*/*/*.parquet',
+            hive_partitioning = true)
+
+      - name: github_repos
+        description: Repo attributes (archived, license, last push) per API snapshot.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/github_repos/*/*/*.parquet',
+            hive_partitioning = true)
+
+      - name: dependencies
+        description: Dependencies declared by the project under check, with repo resolution.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/reference/dependencies.parquet')
+
+      - name: osv_vulnerabilities
+        description: OSV.dev advisories per package, with affected and fixed versions.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/osv/*/*.parquet',
+            hive_partitioning = true)
+
+      - name: scorecard_checks
+        description: OpenSSF Scorecard check results per repo.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/scorecard/*/*.parquet',
+            hive_partitioning = true)
+
+      - name: findings
+        description: >
+          Findings from the Python detectors (artifact scan, typosquatting, provenance,
+          dependency confusion, repository scan), one partition per detector and day.
+        meta:
+          external_location: >-
+            read_parquet('{{ env_var('OSS_PULSE_DATA_DIR', '../data') }}/bronze/findings/*/*/*.parquet',
+            hive_partitioning = true)

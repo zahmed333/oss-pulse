@@ -25,3 +25,13 @@ models:
     columns:
       - name: repo_key
         data_tests: [unique, not_null]
+
+  - name: stg_github__repos
+    columns:
+      - name: repo_key
+        data_tests: [unique]
+
+  - name: stg_reference__dependencies
+    columns:
+      - name: pypi_package
+        data_tests: [unique, not_null]

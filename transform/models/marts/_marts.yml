@@ -72,7 +72,7 @@ models:
 
   - name: mart_repo_health
     description: >
-      Daily trailing-window health metrics and a 0-100 composite score per tracked repo.
+      Daily trailing-window (var `health_window_days`) health metrics and a 0-100 composite score per tracked repo.
       This is the public contract of the project - its schema is enforced.
     config:
       contract:
@@ -95,6 +95,9 @@ models:
       - name: as_of_date
         data_type: date
         constraints: [{ type: not_null }]
+      - name: window_days
+        data_type: integer
+        description: Trailing window length (dbt var `health_window_days`) for all *_in_window metrics.
       - name: is_window_complete
         data_type: boolean
       - name: health_score
@@ -103,21 +106,68 @@ models:
         data_tests:
           - value_between:
               arguments: { min_value: 0, max_value: 100 }
-      - { name: stars_7d, data_type: bigint }
-      - { name: forks_7d, data_type: bigint }
-      - { name: pushes_7d, data_type: bigint }
-      - { name: prs_opened_7d, data_type: bigint }
-      - { name: prs_merged_7d, data_type: bigint }
-      - { name: issues_opened_7d, data_type: bigint }
-      - { name: issues_closed_7d, data_type: bigint }
-      - { name: active_contributors_7d, data_type: bigint }
+      - { name: stars_in_window, data_type: bigint }
+      - { name: forks_in_window, data_type: bigint }
+      - { name: pushes_in_window, data_type: bigint }
+      - { name: prs_opened_in_window, data_type: bigint }
+      - { name: prs_merged_in_window, data_type: bigint }
+      - { name: issues_opened_in_window, data_type: bigint }
+      - { name: issues_closed_in_window, data_type: bigint }
+      - { name: active_contributors_in_window, data_type: bigint }
       - name: bus_factor
         data_type: bigint
         description: Fewest contributors accounting for >= 50% of pushes + opened PRs in the window.
         data_tests:
           - expression_is_true:
               arguments:
-                expression: "bus_factor <= active_contributors_7d"
+                expression: "bus_factor <= active_contributors_in_window"
       - { name: median_hours_to_merge, data_type: double }
       - { name: median_hours_to_first_response, data_type: double }
       - { name: days_since_last_release, data_type: bigint }
+
+  - name: mart_dependency_risk
+    description: >
+      One row per dependency of the checked project with a risk level
+      (critical / high / medium / ok / unknown) and the reasons behind it.
+    columns:
+      - name: pypi_package
+        data_tests: [unique, not_null]
+      - name: risk_level
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [critical, high, medium, ok, unknown]
+
+  - name: fct_dependency_vulnerabilities
+    description: Advisories affecting the resolved version or the allowed range of a dependency.
+    columns:
+      - name: dependency_vuln_sk
+        data_tests: [unique, not_null]
+      - name: severity
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [critical, high, medium, low, unknown]
+
+  - name: dim_repo_security
+    description: OpenSSF Scorecard summary per repo (null when the repo isn't scanned).
+    columns:
+      - name: repo_key
+        data_tests: [unique]
+
+  - name: fct_supply_chain_findings
+    description: >
+      Unified supply-chain findings from all detectors (Python heuristics, OSV, SQL
+      release-integrity rules). One row per finding, with rule id and evidence.
+    columns:
+      - name: severity
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [critical, high, medium, low, info]
+      - name: rule_id
+        data_tests: [not_null]
+      - name: target
+        data_tests: [not_null]

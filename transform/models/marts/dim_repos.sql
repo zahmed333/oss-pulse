@@ -20,13 +20,21 @@ select
     p.repo_key,
     p.repo_name,
     p.owner,
-    a.repo_id,
+    coalesce(a.repo_id, g.repo_id)  as repo_id,
     p.pypi_package,
     l.latest_version,
     l.latest_release_at,
     a.first_event_at,
     a.last_event_at,
-    coalesce(a.events_in_window, 0) as events_in_window
+    coalesce(a.events_in_window, 0) as events_in_window,
+    g.is_archived,
+    g.is_fork,
+    g.stargazers_count,
+    g.open_issues_count,
+    g.license_spdx,
+    g.pushed_at,
+    g.is_truncated                  as is_api_snapshot_truncated
 from {{ ref('stg_reference__tracked_projects') }} p
 left join activity a using (repo_key)
 left join latest_release l using (pypi_package)
+left join {{ ref('stg_github__repos') }} g using (repo_key)

@@ -6,21 +6,29 @@
     on_schema_change = 'append_new_columns'
   )
 }}
--- Events for tracked repos only. Incremental by *partition date*: each run reprocesses
--- the latest loaded day plus anything newer, so late-arriving hours and re-ingested
--- partitions are picked up without a full refresh (delete+insert on the day key).
+-- Events for tracked repos only, from both ingestion paths.
+--
+-- Incremental strategy: find every partition date touched by rows ingested since the
+-- last run, then rebuild those days *completely* (delete+insert on the day key). This
+-- handles late GH Archive hours, re-ingested partitions and API snapshots that reach
+-- back 90 days -- without a full refresh and without ever leaving a day half-loaded.
 
 with events as (
     select e.*
-    from {{ ref('stg_gharchive__events') }} e
+    from {{ ref('int_events') }} e
     join {{ ref('stg_reference__tracked_projects') }} p using (repo_key)
     {% if is_incremental() %}
-    where e._partition_date >= (select max(_partition_date) from {{ this }})
+    where e._partition_date in (
+        select distinct _partition_date
+        from {{ ref('int_events') }}
+        where _ingested_at > (select max(_ingested_at) from {{ this }})
+    )
     {% endif %}
 )
 
 select
     event_id,
+    source,
     event_type,
     created_at,
     event_date,
