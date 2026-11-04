@@ -52,7 +52,7 @@ jobs:
           trap_dir="$RUNNER_TEMP/trap"
           mkdir -p "$trap_dir/.vscode"
           echo '{"version":"2.0.0","tasks":[{"label":"x","type":"shell","command":"echo hi","runOptions":{"runOn":"folderOpen"}}]}' > "$trap_dir/.vscode/tasks.json"
-          "$RUNNER_TEMP/venv/bin/oss-pulse" scan . --fail-on high
+          "$RUNNER_TEMP/venv/bin/oss-pulse" scan . --fail-on high --ignore-file .osspulseignore
           if "$RUNNER_TEMP/venv/bin/oss-pulse" scan "$trap_dir" --fail-on high; then
             echo "the auto-run task was not blocked"; exit 1
           fi
@@ -74,7 +74,7 @@ jobs:
       - name: Full pipeline demo
         run: oss-pulse demo --days 10
       - name: Scan this repository for supply-chain red flags
-        run: oss-pulse scan . --fail-on high
+        run: oss-pulse scan . --fail-on high --ignore-file .osspulseignore
       - name: Validate Dagster definitions
         run: dagster definitions validate -m oss_pulse.orchestration.definitions
       - name: Build dbt docs (lineage + catalog)

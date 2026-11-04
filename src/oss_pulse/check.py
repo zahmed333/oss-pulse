@@ -37,6 +37,7 @@ from oss_pulse.ingest import github_api, osv, pypi, scorecard
 from oss_pulse.ingest.dependencies import parse_dependency_file, resolve_repo
 from oss_pulse.ingest.io import atomic_write_table
 from oss_pulse.ingest.schema import DEPENDENCIES
+from oss_pulse.safe_text import md_code, md_text
 from oss_pulse.supplychain import artifacts, provenance, typosquat
 from oss_pulse.supplychain.findings import SEVERITY_RANK, Finding, write_findings
 from oss_pulse.transform import run_dbt
@@ -318,10 +319,6 @@ def _days(v) -> str:
     return "today" if v == 0 else f"{v}d ago"
 
 
-def _md(text: str) -> str:
-    return str(text).replace("|", "\\|").replace("\n", " ")
-
-
 def render_markdown(result: CheckResult) -> str:
     c = result.counts()
     summary = " · ".join(f"{ICONS[lvl]} {c[lvl]} {lvl}" for lvl in LEVELS if c[lvl])
@@ -329,11 +326,12 @@ def render_markdown(result: CheckResult) -> str:
         REPORT_MARKER,
         "## Supply-chain risk report",
         "",
-        f"**{len(result.rows)} dependencies** in `{result.source}` · {summary}",
+        f"**{len(result.rows)} dependencies** in {md_code(result.source, in_table=False)} "
+        f"· {summary}",
         "",
     ]
     for d in result.degraded:
-        lines.append(f"> [!WARNING]\n> Not checked: {_md(d)}")
+        lines.append(f"> [!WARNING]\n> Not checked: {md_text(d)}")
     if result.degraded:
         lines.append("")
     lines += [
@@ -341,12 +339,14 @@ def render_markdown(result: CheckResult) -> str:
         "|---|---|---|---|---|---|---|---|",
     ]
     for r in result.rows:
+        # repo_name only ever holds [A-Za-z0-9_.-]/[A-Za-z0-9_.-] (dependencies.GITHUB_URL)
         repo = f"[{r['repo_name']}](https://github.com/{r['repo_name']})" if r["repo_name"] else "–"
-        why = "<br>".join(_md(x) for x in r["risk_reasons"]) or "–"
+        why = "<br>".join(md_text(x) for x in r["risk_reasons"]) or "–"
         bus = "–" if r["bus_factor"] is None else str(r["bus_factor"])
         prov = " 🔏" if r.get("has_provenance") else ""
         lines.append(
-            f"| {ICONS[r['risk_level']]} | `{r['pypi_package']}` | {r['resolved_version'] or '–'}"
+            f"| {ICONS[r['risk_level']]} | {md_code(r['pypi_package'])} "
+            f"| {md_text(r['resolved_version'] or '–')}"
             f"{prov} | {repo} | {why} | {_days(r['days_since_last_release'])} "
             f"| {_days(r['days_since_last_commit'])} | {bus} |"
         )
@@ -360,9 +360,9 @@ def render_markdown(result: CheckResult) -> str:
         ]
         for f in result.findings:
             lines.append(
-                f"| {ICONS[f['severity']]} {f['severity']} | `{f['target']}` "
-                f"| {f['rule_id']} | {_md(f['title'])}: {_md(f['detail'])} "
-                f"| {_md(f['location'] or '–')} | `{_md((f['evidence'] or '–')[:100])}` |"
+                f"| {ICONS[f['severity']]} {f['severity']} | {md_code(f['target'])} "
+                f"| {f['rule_id']} | {md_text(f['title'])}: {md_text(f['detail'])} "
+                f"| {md_code(f['location'] or '–')} | {md_code(f['evidence'] or '–', 100)} |"
             )
         lines.append("</details>")
     lines += [

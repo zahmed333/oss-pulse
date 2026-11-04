@@ -64,6 +64,12 @@ Maintenance signals (archived, inactive, bus factor, ...) are computed in
 | `CODE-HIDDEN` | high | Code hidden off-screen or in fake media files | Hundreds of spaces before a payload, or JavaScript inside a .png/.woff file. | Contagious Interview coding assignments |
 | `CODE-JSOBF` | high | Obfuscated JavaScript | eval/new Function over decoded strings, or very long single-line minified payloads outside build output. | – |
 
+## evasion
+
+| Rule | Severity | Detects | Why it matters | Seen in |
+|---|---|---|---|---|
+| `EVADE-IGNORE` | high | The folder ships its own OSS Pulse ignore file | A folder under inspection must not be able to silence the scan of itself. The file is not applied; the finding is high when it would have hidden other findings. | – |
+
 ## auto-execution
 
 | Rule | Severity | Detects | Why it matters | Seen in |

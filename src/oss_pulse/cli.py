@@ -166,6 +166,13 @@ def scan(
         help="Repository or folder to inspect (nothing is executed)",
     ),
     fail_on: str = typer.Option("never", help="critical | high | medium | never"),
+    ignore_file: Path = typer.Option(
+        None,
+        exists=True,
+        dir_okay=False,
+        help="Your own list of reviewed paths or rule ids to suppress. A file inside the "
+        "scanned folder is never applied unless you pass it here.",
+    ),
     markdown: Path = typer.Option(None, help="Also write the Markdown report here"),
     json_out: Path = typer.Option(None, "--json", help="Also write the JSON report here"),
 ) -> None:
@@ -179,15 +186,15 @@ def scan(
     from oss_pulse.supplychain.findings import SEVERITY_RANK
 
     _validate_fail_on(fail_on)
-    findings = run_scan(path)
-    md = render_scan_markdown(path, findings)
+    result = run_scan(path, ignore_file=ignore_file)
+    md = render_scan_markdown(result)
     typer.echo(md)
     if markdown:
         markdown.write_text(md)
     if json_out:
-        json_out.write_text(render_scan_json(path, findings))
+        json_out.write_text(render_scan_json(result))
     if fail_on != "never" and any(
-        SEVERITY_RANK[f.severity] >= SEVERITY_RANK[fail_on] for f in findings
+        SEVERITY_RANK[f.severity] >= SEVERITY_RANK[fail_on] for f in result.findings
     ):
         typer.echo(f"failing: findings at or above '{fail_on}'", err=True)
         raise typer.Exit(code=1)
