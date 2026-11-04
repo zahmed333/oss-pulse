@@ -212,6 +212,15 @@ _RULES = [
         "eval/new Function over decoded strings, or very long single-line minified payloads "
         "outside build output.",
     ),
+    # ---------------------------------------------------------------- evasion
+    Rule(
+        "EVADE-IGNORE",
+        "high",
+        "evasion",
+        "The folder ships its own OSS Pulse ignore file",
+        "A folder under inspection must not be able to silence the scan of itself. The file "
+        "is not applied; the finding is high when it would have hidden other findings.",
+    ),
     # ---------------------------------------------------------------- repository auto-run
     Rule(
         "AUTO-VSCODE",

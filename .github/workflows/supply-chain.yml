@@ -23,4 +23,5 @@ jobs:
         with:
           dependency-file: pyproject.toml
           scan-path: .
+          ignore-file: .osspulseignore
           fail-on: critical

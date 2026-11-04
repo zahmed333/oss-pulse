@@ -17,6 +17,12 @@ inputs:
   fail-on:
     description: Fail the job at this risk level or above (critical | high | medium | never)
     default: high
+  ignore-file:
+    description: >
+      Your own list of reviewed paths or rule ids to suppress in the repository scan, for
+      example .osspulseignore ('' suppresses nothing). A pull request can edit this file,
+      so protect it with CODEOWNERS. The report always lists what was suppressed.
+    default: ""
   internal-packages:
     description: Newline- or comma-separated private package names (dependency-confusion guard)
     default: ""
@@ -59,6 +65,7 @@ runs:
         DEP_FILE: ${{ inputs.dependency-file }}
         SCAN_PATH: ${{ inputs.scan-path }}
         FAIL_ON: ${{ inputs.fail-on }}
+        IGNORE_FILE: ${{ inputs.ignore-file }}
         INTERNAL: ${{ inputs.internal-packages }}
         DAYS: ${{ inputs.days }}
       run: |
@@ -66,7 +73,9 @@ runs:
         out="$RUNNER_TEMP/oss-pulse"; mkdir -p "$out"
         status=0
         if [ -n "$SCAN_PATH" ]; then
-          oss-pulse scan "$SCAN_PATH" --fail-on "$FAIL_ON" \
+          scan_args=()
+          if [ -n "$IGNORE_FILE" ]; then scan_args+=(--ignore-file "$IGNORE_FILE"); fi
+          oss-pulse scan "$SCAN_PATH" --fail-on "$FAIL_ON" "${scan_args[@]}" \
             --markdown "$out/scan.md" --json "$out/scan.json" > /dev/null || status=1
         fi
         if [ -n "$DEP_FILE" ] && [ -f "$DEP_FILE" ]; then

