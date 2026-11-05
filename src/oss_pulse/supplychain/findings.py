@@ -13,12 +13,12 @@ from oss_pulse.ingest.io import atomic_write_table
 from oss_pulse.ingest.schema import UTC_TS
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
-SEVERITY_RANK = {s: len(SEVERITIES) - i for i, s in enumerate(SEVERITIES)}  # critical=5
+SEVERITY_RANK = {s: len(SEVERITIES) - i for i, s in enumerate(SEVERITIES)}
 
 FINDINGS = pa.schema(
     [
-        pa.field("target", pa.string(), nullable=False),  # package name or repo path
-        pa.field("target_type", pa.string(), nullable=False),  # package | repository
+        pa.field("target", pa.string(), nullable=False),
+        pa.field("target_type", pa.string(), nullable=False),
         pa.field("target_version", pa.string()),
         pa.field("detector", pa.string(), nullable=False),
         pa.field("rule_id", pa.string(), nullable=False),

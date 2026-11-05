@@ -68,7 +68,6 @@ class _Sim:
             }
         )
 
-    # ---------------------------------------------------------------- per-repo story
     def simulate_repo(self, repo: str, activity: float) -> None:
         rng = self.rng
         hours = (self.end - self.start).total_seconds() / 3600
@@ -111,7 +110,7 @@ class _Sim:
             )
 
         number = rng.randint(100, 20000)
-        for _ in range(n(0.5)):  # pull requests
+        for _pull_request in range(n(0.5)):
             number += 1
             author = rng.choices(core, weights)[0] if rng.random() < 0.6 else rng.choice(outsiders)
             opened = self._rand_ts()
@@ -154,7 +153,7 @@ class _Sim:
                     {"action": "closed", "number": number, "pull_request": dict(pr)},
                 )
 
-        for _ in range(n(0.4)):  # issues
+        for _issue in range(n(0.4)):
             number += 1
             author = rng.choice(outsiders)
             opened = self._rand_ts()

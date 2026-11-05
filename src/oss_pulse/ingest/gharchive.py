@@ -57,9 +57,6 @@ class IngestResult:
     ingested_at: datetime
 
 
-# --------------------------------------------------------------------------- helpers
-
-
 def floor_hour(ts: datetime) -> datetime:
     ts = ts if ts.tzinfo else ts.replace(tzinfo=UTC)
     return ts.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
@@ -82,9 +79,6 @@ def archive_filename(hour: datetime) -> str:
 
 def partition_dir(root: Path, hour: datetime) -> Path:
     return root / f"event_date={hour:%Y-%m-%d}" / f"event_hour={hour:%H}"
-
-
-# ------------------------------------------------------------------------ download
 
 
 def download_hour(settings: Settings, hour: datetime, client: httpx.Client | None = None) -> Path:
@@ -128,9 +122,6 @@ def download_hour(settings: Settings, hour: datetime, client: httpx.Client | Non
     raise AssertionError("unreachable")
 
 
-# ------------------------------------------------------------------------- parsing
-
-
 def _parse_ts(value: str) -> datetime:
     ts = datetime.fromisoformat(value.replace("Z", "+00:00"))
     return ts if ts.tzinfo else ts.replace(tzinfo=UTC)
@@ -170,9 +161,6 @@ def iter_archive(path: Path) -> Iterator[tuple[int, str]]:
             line = line.strip()
             if line:
                 yield lineno, line
-
-
-# -------------------------------------------------------------------------- ingest
 
 
 def ingest_file(settings: Settings, hour: datetime, archive_path: Path) -> IngestResult:

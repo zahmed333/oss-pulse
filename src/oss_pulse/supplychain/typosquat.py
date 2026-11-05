@@ -25,7 +25,8 @@ TOP_URL = (
     "https://raw.githubusercontent.com/hugovk/top-pypi-packages/main/top-pypi-packages.min.json"
 )
 BUNDLED = Path(__file__).with_name("data") / "top_pypi_packages.txt"
-TARGETS = 5000  # names worth impersonating
+MOST_POPULAR_NAMES_TO_PROTECT = 5000
+TOO_SHORT_TO_COMPARE = 4
 AFFIXES = [
     ("python-", ""),
     ("", "-python"),
@@ -101,12 +102,12 @@ def find_lookalike(
     """Return (rule_id, popular_name, how) if `name` impersonates a popular project."""
     name = canonicalize_name(name)
     if name in (popular_set if popular_set is not None else set(popular)):
-        return None  # it *is* a popular project
-    targets = popular[:TARGETS]
+        return None
+    targets = popular[:MOST_POPULAR_NAMES_TO_PROTECT]
     squashed = name.replace("-", "")
     for p in targets:
-        if len(p) < 4:
-            continue  # too short: everything is one edit from "six"
+        if len(p) < TOO_SHORT_TO_COMPARE:
+            continue
         if squashed == p.replace("-", "") and name != p:
             return "TYPO-001", p, "same letters, different separators"
         if damerau_levenshtein(name, p, 1) <= 1:

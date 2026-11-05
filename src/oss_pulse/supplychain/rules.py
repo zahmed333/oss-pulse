@@ -20,7 +20,6 @@ class Rule:
 
 
 _RULES = [
-    # ---------------------------------------------------------------- known bad
     Rule(
         "OSV-MAL",
         "critical",
@@ -43,7 +42,6 @@ _RULES = [
         "Version range still allows vulnerable versions",
         "Your specifier permits versions with advisories; a pinned or cached install may use one.",
     ),
-    # ---------------------------------------------------------------- identity
     Rule(
         "TYPO-001",
         "high",
@@ -81,7 +79,6 @@ _RULES = [
         "Package first published very recently",
         "Most malicious packages are days old when they are installed.",
     ),
-    # ---------------------------------------------------------------- release integrity
     Rule(
         "REL-001",
         "medium",
@@ -122,7 +119,6 @@ _RULES = [
         "Provenance points to a different repository",
         "The release was built from a repository other than the one the package links to.",
     ),
-    # ---------------------------------------------------------------- code in artifacts / repos
     Rule(
         "CODE-PTH",
         "high",
@@ -212,7 +208,6 @@ _RULES = [
         "eval/new Function over decoded strings, or very long single-line minified payloads "
         "outside build output.",
     ),
-    # ---------------------------------------------------------------- evasion
     Rule(
         "EVADE-IGNORE",
         "high",
@@ -221,7 +216,6 @@ _RULES = [
         "A folder under inspection must not be able to silence the scan of itself. The file "
         "is not applied; the finding is high when it would have hidden other findings.",
     ),
-    # ---------------------------------------------------------------- repository auto-run
     Rule(
         "AUTO-VSCODE",
         "critical",
@@ -259,7 +253,6 @@ _RULES = [
         "Git hooks configured inside the repository",
         "Hooks run on commit/checkout; committed hook directories are executed by tools like husky.",
     ),
-    # ---------------------------------------------------------------- CI/CD
     Rule(
         "GHA-PRT",
         "high",

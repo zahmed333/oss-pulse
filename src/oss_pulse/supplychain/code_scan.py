@@ -176,10 +176,11 @@ def _line_of(text: str, pos: int) -> int:
 
 
 def _snippet(text: str, pos: int, width: int = 140) -> str:
+    """The line containing `pos`; a very long line is cut to `width` around the match."""
     start = text.rfind("\n", 0, pos) + 1
     end = text.find("\n", pos)
     line = text[start : end if end != -1 else None].strip()
-    if len(line) > width:  # centre the snippet on the match for very long lines
+    if len(line) > width:
         rel = pos - start
         line = line[max(0, rel - width // 2) : rel + width // 2]
     return line
@@ -192,8 +193,6 @@ def _first(pattern: re.Pattern, text: str):
 def _hit(rule_id: str, file: str, text: str, m: re.Match, **kw) -> Hit:
     return Hit(rule_id, file, _line_of(text, m.start()), _snippet(text, m.start()), **kw)
 
-
-# ------------------------------------------------------------------ setup.py (AST)
 
 _NET_CALLS = {
     "urlopen",
@@ -274,9 +273,6 @@ def scan_setup_py(file: str, text: str) -> list[Hit]:
                 )
             )
     return hits
-
-
-# ------------------------------------------------------------------- generic text
 
 
 def scan_text(file: str, text: str, context: str) -> list[Hit]:

@@ -10,6 +10,23 @@ make test      # runs fully offline
 make lint
 ```
 
+## Where things live
+
+| Path | Responsibility |
+|---|---|
+| `src/oss_pulse/cli.py` | Builds the `oss-pulse` command from the command modules. |
+| `src/oss_pulse/commands/security.py` | `check`, `scan` and `rules`. |
+| `src/oss_pulse/commands/lakehouse.py` | The GH Archive health pipeline commands (`ingest`, `transform`, `report`, `demo`). |
+| `src/oss_pulse/check/pipeline.py` | One `check` run as named steps: fetch PyPI metadata, detect lookalikes, fetch GitHub activity, detect provenance changes, scan release files, store, decide, load the result. |
+| `src/oss_pulse/check/report.py` | Markdown and JSON output for `check`. |
+| `src/oss_pulse/scan.py` | `scan`: walks a folder and renders its report. |
+| `src/oss_pulse/supplychain/` | Detectors. Each takes data in and returns `Finding`s; none of them fetch, store or print. |
+| `src/oss_pulse/ingest/` | Source clients and bronze writers, one module per source. |
+| `src/oss_pulse/safe_text.py` | Every string from scanned code goes through here before it is printed. |
+| `transform/` | dbt project: the SQL rules and the risk marts. |
+
+Detectors, sources and renderers only meet in `check/pipeline.py` and `scan.py`, so a new detector or a new output format touches one place.
+
 ## Reporting a wrong result
 
 Use the issue forms. A false positive or a missed detection is a bug. Include the command, the output, and for a package its name and version. Don't attach real malware: describe it, or link to an advisory.

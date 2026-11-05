@@ -142,9 +142,6 @@ class GitHubClient:
         return items, True
 
 
-# ------------------------------------------------------------------- translation
-
-
 @dataclass
 class RepoSnapshot:
     repo: dict

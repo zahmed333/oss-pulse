@@ -41,7 +41,7 @@ from oss_pulse.transform import dbt_env
 
 settings = get_settings()
 dbt_env(settings)
-SOURCE = os.getenv("OSS_PULSE_SOURCE", "gharchive")  # or "synthetic"
+SOURCE = os.getenv("OSS_PULSE_SOURCE", "gharchive")
 
 hourly = HourlyPartitionsDefinition(start_date=os.getenv("OSS_PULSE_START", "2026-10-01-00:00"))
 daily = DailyPartitionsDefinition(start_date=os.getenv("OSS_PULSE_START_DAY", "2026-10-01"))
@@ -101,11 +101,6 @@ def tracked_projects_reference() -> MaterializeResult:
     )
 
 
-# ----------------------------------------------------------------------------- dbt
-
-# The manifest lives where `oss-pulse transform` / `demo` write it (Settings.dbt_work_dir),
-# not in transform/target, so the CLI and Dagster share one build and nothing is written
-# into the project directory.
 dbt_project = DbtProject(
     project_dir=settings.dbt_project_dir,
     profiles_dir=settings.dbt_project_dir,
@@ -115,7 +110,7 @@ dbt_project.prepare_if_dev()
 
 
 class Translator(DagsterDbtTranslator):
-    def get_asset_key(self, dbt_resource_props):  # map dbt sources onto our bronze assets
+    def get_asset_key(self, dbt_resource_props):
         if dbt_resource_props["resource_type"] == "source":
             return AssetKey(["bronze", dbt_resource_props["name"]])
         return super().get_asset_key(dbt_resource_props)
@@ -130,7 +125,6 @@ class Translator(DagsterDbtTranslator):
 
 @dbt_assets(manifest=dbt_project.manifest_path, dagster_dbt_translator=Translator())
 def lakehouse_dbt(context: AssetExecutionContext, dbt: DbtCliResource):
-    # One target dir per run, under the data dir like every other dbt invocation.
     target = settings.dbt_work_dir / "dagster" / context.run_id[:8]
     yield from dbt.cli(["build"], context=context, target_path=target).stream()
 
