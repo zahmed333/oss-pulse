@@ -1,0 +1,35 @@
+# oss-pulse scripted customer tasks	commit=34bdad4	date=2026-11-05T01:30:01Z	os=Linux 6.18.44-fc-v236 x86_64	python=3.13.18	tasks_sha256=6f61709103f019052841c93834f2d9b054f9e1bb89faabfb372aededf09f4845
+task	result	measure	evidence
+T01-readme-install-copy-pastes	FAIL	-	pip install git+https://github.com/<you>/oss-pulse
+T02-fresh-install	PASS	17s, 73 packages, 575 MB	pip rc=0
+T03-fresh-scan-clean-folder	PASS	rc=0	**0 findings** · 🟢 no findings
+T04-fresh-check-benign-deps	PASS	rc=0, 9s	**1 dependencies** in `requirements.txt` · ⚪ 1 unknown
+T05-scan-detects-auto-run	PASS	rc=1	**1 findings** · 🔴 1 critical
+T06-planted-ignore-cannot-hide	PASS	rc=1	**2 findings** · 🔴 1 critical · 🟠 1 high
+T07-typo-finding-names-name-and-line	FAIL	rc=0	**1 findings** · 🟠 1 high
+T08-version-flag	FAIL	rc=2	Usage: oss-pulse [OPTIONS] COMMAND [ARGS]...
+T09-report-has-feedback-link	FAIL	-	<sub>Static scan, nothing was executed. To accept reviewed findings in your own repository, list paths or rule ids in a file and pass `--ign
+T10-user-error-not-risk-exit	FAIL	rc=1	ValueError: no dependencies found in fx/empty/requirements.txt
+T11-clean-report-coverage-and-caveat	FAIL	-	**0 findings** · 🟢 no findings
+T12-help-security-changelog-feedback	FAIL	-	missing: SECURITY.md SUPPORT.md CHANGELOG.md CONTRIBUTING.md .github/ISSUE_TEMPLATE
+T13-privacy-statement	FAIL	-	RULES.md github-action.md
+T14-nested-folder-trap	FAIL	rc=0	**0 findings** · 🟢 no findings
+T15-code-workspace-trap	FAIL	rc=0	**0 findings** · 🟢 no findings
+T16-escaped-folderopen-trap	FAIL	rc=0	**0 findings** · 🟢 no findings
+T17-odd-tasks-list-trap	FAIL	rc=1	AttributeError: 'str' object has no attribute 'get'
+T18-odd-workflow-next-to-trap	FAIL	rc=1	TypeError: unhashable type: 'dict'
+T19-default-gate-stops-trap	FAIL	rc=0	**1 findings** · 🔴 1 critical
+T20-cp1252-redirect	FAIL	rc=1	UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f534' in
+T21-lockfile-plain-error	FAIL	rc=1	ValueError: unsupported dependency file: uv.lock (expected pyproject.toml or
+T22-verbose-after-command	FAIL	rc=2	No such option: -v
+T23-conftest-download-exec	FAIL	rc=0	**0 findings** · 🟢 no findings
+T24-big-bundle-payload	FAIL	rc=0	**0 findings** · 🟢 no findings
+T25-node-modules-payload	FAIL	rc=0	**0 findings** · 🟢 no findings
+T26-terminal-output-not-markdown	FAIL	rc=0	<!-- oss-pulse-scan -->
+T27-rules-explains-one-rule	FAIL	rc=2	Got unexpected extra argument(s) (AUTO-VSCODE)
+T28-zip-trap	FAIL	rc=2	Invalid value for 'path': Directory 'fx/trap.zip' is a file.
+T29-fetch-then-eval	FAIL	rc=0	**0 findings** · 🟢 no findings
+T30-devcontainer-initialize-command	FAIL	rc=1	**1 findings** · 🟠 1 high
+T31-guardrail-legit-take-home	PASS	rc=0	**2 findings** · 🟡 2 medium
+T32-guardrail-decoys-scan-fast	PASS	rc=0, 0.41s	**1 findings** · 🟠 1 high
+# passed 7 of 32

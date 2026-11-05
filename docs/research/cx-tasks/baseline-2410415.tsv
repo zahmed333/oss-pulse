@@ -1,0 +1,35 @@
+# oss-pulse scripted customer tasks	commit=2410415	date=2026-11-05T01:29:24Z	os=Linux 6.18.44-fc-v236 x86_64	python=3.13.18	tasks_sha256=6f61709103f019052841c93834f2d9b054f9e1bb89faabfb372aededf09f4845
+task	result	measure	evidence
+T01-readme-install-copy-pastes	FAIL	-	pip install git+https://github.com/<you>/oss-pulse
+T02-fresh-install	PASS	15s, 73 packages, 575 MB	pip rc=0
+T03-fresh-scan-clean-folder	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T04-fresh-check-benign-deps	FAIL	rc=1, 4s	RuntimeError: dbt build failed - rerun with -v for details
+T05-scan-detects-auto-run	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T06-planted-ignore-cannot-hide	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T07-typo-finding-names-name-and-line	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T08-version-flag	FAIL	rc=2	Usage: oss-pulse [OPTIONS] COMMAND [ARGS]...
+T09-report-has-feedback-link	FAIL	-	FileNotFoundError: [Errno 2] No such file or directory:
+T10-user-error-not-risk-exit	FAIL	rc=1	ValueError: no dependencies found in fx/empty/requirements.txt
+T11-clean-report-coverage-and-caveat	FAIL	-	FileNotFoundError: [Errno 2] No such file or directory:
+T12-help-security-changelog-feedback	FAIL	-	missing: SECURITY.md SUPPORT.md CHANGELOG.md CONTRIBUTING.md .github/ISSUE_TEMPLATE
+T13-privacy-statement	FAIL	-	RULES.md github-action.md
+T14-nested-folder-trap	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T15-code-workspace-trap	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T16-escaped-folderopen-trap	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T17-odd-tasks-list-trap	FAIL	rc=1	AttributeError: 'str' object has no attribute 'get'
+T18-odd-workflow-next-to-trap	FAIL	rc=1	TypeError: unhashable type: 'dict'
+T19-default-gate-stops-trap	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T20-cp1252-redirect	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T21-lockfile-plain-error	FAIL	rc=1	ValueError: unsupported dependency file: uv.lock (expected pyproject.toml or
+T22-verbose-after-command	FAIL	rc=2	No such option: -v
+T23-conftest-download-exec	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T24-big-bundle-payload	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T25-node-modules-payload	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T26-terminal-output-not-markdown	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T27-rules-explains-one-rule	FAIL	rc=2	Got unexpected extra argument(s) (AUTO-VSCODE)
+T28-zip-trap	FAIL	rc=2	Invalid value for 'path': Directory 'fx/trap.zip' is a file.
+T29-fetch-then-eval	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T30-devcontainer-initialize-command	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T31-guardrail-legit-take-home	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory:
+T32-guardrail-decoys-scan-fast	FAIL	rc=1, 0.64s	FileNotFoundError: [Errno 2] No such file or directory:
+# passed 1 of 32

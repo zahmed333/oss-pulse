@@ -1,0 +1,47 @@
+README.md:36                         bold lead-in bullet  - **Auto-run on open:** `.vscode/tasks.json` with `runOn: folderOpen`, or workspace settin
+README.md:37                         bold lead-in bullet  - **Run on install:** npm `preinstall`/`postinstall` hooks, especially ones that fetch rem
+README.md:38                         bold lead-in bullet  - **Hidden payloads:** obfuscated JS/Python, code pushed off-screen with whitespace, scrip
+README.md:39                         bold lead-in bullet  - **Stealers:** wallet and browser data access, environment dumps, exfiltration endpoints.
+README.md:40                         bold lead-in bullet  - **Typosquatted dependencies** in `requirements.txt` / `pyproject.toml`.
+README.md:41                         bold lead-in bullet  - **Unsafe GitHub Actions:** `pull_request_target` with a PR checkout (Nx), `${{ github.ev
+README.md:50                         emoji                | 🔴 | corp-utils | – | CONF-001: Internal package name exists on public PyPI |
+README.md:51                         emoji                | 🔴 | evil-lib | 0.2 | OSV-MAL: Known malicious package |
+README.md:52                         emoji                | 🟠 | hijacked-lib | 3.0 | CODE-EXFIL, CODE-OBF, CODE-PTH, CODE-SETUP, PROV-001: provenanc
+README.md:55                         emoji                | 🟠 | reqeusts | 0.0.1 | TYPO-001: one edit away from 'requests'; first published 5 days a
+README.md:56                         emoji                | 🟡 | range-lib | 2.0 | OSV-RANGE: `range-lib>=1.0` still allows a vulnerable version |
+README.md:57                         emoji                | 🟢 | healthy-lib | 1.5.0 🔏 | – |
+README.md:129                        bold lead-in bullet  - **Degrade loudly, never silently.** If GitHub, OSV or Scorecard is unreachable the check
+README.md:130                        bold lead-in bullet  - **Precision over recall on popular code.** A noisy security tool gets switched off. Rule
+README.md:131                        bold lead-in bullet  - **Scan what pip installs, not what GitHub shows.** In the Ultralytics attack the malicio
+README.md:132                        bold lead-in bullet  - **Absolute, explainable rules.** Every risk level comes with reasons a human can verify.
+README.md:133                        bold lead-in bullet  - **One findings contract.** Python detectors, OSV advisories and SQL release rules all la
+ROADMAP.md:8                         emoji                Status key: ⬜ todo · 🟨 in progress · ✅ done
+ROADMAP.md:12                        emoji                ## Milestone 0: Ship it and get real users ⬜
+ROADMAP.md:21                        emoji                ## Milestone S1: Lockfiles and transitive dependencies ⬜
+ROADMAP.md:29                        emoji                ## Milestone S2: More detectors ⬜
+ROADMAP.md:42                        emoji                ## Milestone S3: Continuous monitoring ⬜
+ROADMAP.md:53                        emoji                ## Milestone 1: Real data at real scale ⬜
+ROADMAP.md:67                        emoji                ## Milestone 2: Table format and object storage ⬜
+ROADMAP.md:76                        emoji                ## Milestone 3: SCD Type 2 and richer modelling ⬜
+ROADMAP.md:85                        emoji                ## Milestone 4: Streaming ingestion ⬜
+ROADMAP.md:94                        emoji                ## Milestone 5: Observability and data SLAs ⬜
+ROADMAP.md:105                       emoji                ## Milestone 6: Cloud deployment ⬜
+ROADMAP.md:115                       emoji                ## Milestone 7: Give it back to open source ⬜
+src/oss_pulse/check.py:49            emoji                🔴
+src/oss_pulse/check.py:50            emoji                🟠
+src/oss_pulse/check.py:51            emoji                🟡
+src/oss_pulse/check.py:52            emoji                🔵
+src/oss_pulse/check.py:53            emoji                ⚪
+src/oss_pulse/check.py:54            emoji                ⚪
+src/oss_pulse/check.py:55            emoji                🟢
+src/oss_pulse/check.py:346           emoji                🔏
+src/oss_pulse/check.py:370           emoji                <sub>🔏 = published with Trusted Publishing provenance (PEP 740). Activity window: last
+src/oss_pulse/cli.py:161             shouting             Inspect an untrusted repository BEFORE opening or installing it. Catches auto-run VS Code
+src/oss_pulse/scan.py:23             emoji                🔴
+src/oss_pulse/scan.py:23             emoji                🟠
+src/oss_pulse/scan.py:23             emoji                🟡
+src/oss_pulse/scan.py:23             emoji                🔵
+src/oss_pulse/scan.py:23             emoji                ⚪
+src/oss_pulse/scan.py:100            emoji                🟢 no findings
+
+45 hits: emoji 33, bold lead-in bullet 11, shouting 1
