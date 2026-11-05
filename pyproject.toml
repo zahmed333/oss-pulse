@@ -5,7 +5,22 @@ build-backend = "hatchling.build"
 [project]
 name = "oss-pulse"
 version = "0.1.0"
-description = "An open-source ecosystem health lakehouse: GH Archive + PyPI -> Parquet -> dbt/DuckDB -> health metrics."
+description = "Scan a repository or your Python dependencies for supply-chain malware before you run them: fake interview take-homes, typosquats, hijacked PyPI releases."
+authors = [{ name = "zahmed333" }]
+keywords = ["supply-chain-security", "malware-detection", "typosquatting", "pypi", "dependency-confusion", "github-actions", "vscode", "contagious-interview", "trusted-publishing", "pep-740", "sbom", "devsecops", "dbt", "duckdb"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -19,6 +34,12 @@ dependencies = [
     "dbt-core>=1.9",
     "dbt-duckdb>=1.9",
 ]
+
+[project.urls]
+Homepage = "https://github.com/zahmed333/oss-pulse"
+Documentation = "https://github.com/zahmed333/oss-pulse#readme"
+Issues = "https://github.com/zahmed333/oss-pulse/issues"
+Changelog = "https://github.com/zahmed333/oss-pulse/commits/main"
 
 [project.optional-dependencies]
 orchestration = ["dagster>=1.9", "dagster-dbt>=0.25", "dagster-webserver>=1.9"]

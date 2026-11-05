@@ -14,7 +14,11 @@ from oss_pulse.config import get_settings
 from oss_pulse.ingest import gharchive, pypi, synthetic
 from oss_pulse.transform import run_dbt
 
-app = typer.Typer(help="OSS Pulse: open-source ecosystem health lakehouse.", no_args_is_help=True)
+app = typer.Typer(
+    help="oss-pulse: check a folder or your Python dependencies for supply-chain malware "
+    "before you run them.",
+    no_args_is_help=True,
+)
 ingest_app = typer.Typer(help="Land source data in the bronze layer.", no_args_is_help=True)
 app.add_typer(ingest_app, name="ingest")
 
