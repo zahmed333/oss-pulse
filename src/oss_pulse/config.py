@@ -21,7 +21,7 @@ def _shipped(in_package: str, in_checkout: str) -> Path:
 
 @dataclass(frozen=True)
 class TrackedProject:
-    repo: str  # "owner/name" on GitHub
+    repo: str
     pypi: str | None = None
 
 

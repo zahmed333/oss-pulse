@@ -124,10 +124,10 @@ def scan_release(
             log.warning("could not scan %s: %s", f["filename"], exc)
             continue
         for h in hits:
-            key = (h.rule_id, h.file.split("/", 1)[-1])  # same file in sdist and wheel: once
-            if key in seen:
+            path_inside_archive = h.file.split("/", 1)[-1]
+            if (h.rule_id, path_inside_archive) in seen:
                 continue
-            seen.add(key)
+            seen.add((h.rule_id, path_inside_archive))
             r = rule(h.rule_id)
             findings.append(
                 Finding(
