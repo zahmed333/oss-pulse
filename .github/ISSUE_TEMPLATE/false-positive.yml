@@ -1,0 +1,22 @@
+name: False positive
+description: oss-pulse flagged something that is legitimate
+labels: [false-positive]
+body:
+  - type: input
+    id: command
+    attributes: { label: Command you ran, placeholder: "oss-pulse check requirements.txt" }
+    validations: { required: true }
+  - type: input
+    id: target
+    attributes: { label: Package and version, or the file in the folder }
+    validations: { required: true }
+  - type: input
+    id: rule
+    attributes: { label: Rule id, placeholder: "CODE-SETUP" }
+  - type: textarea
+    id: output
+    attributes: { label: Output, render: text }
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes: { label: Why it is legitimate }

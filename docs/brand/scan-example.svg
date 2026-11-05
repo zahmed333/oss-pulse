@@ -1,0 +1,109 @@
+<svg class="rich-terminal" viewBox="0 0 1580 342.79999999999995" xmlns="http://www.w3.org/2000/svg">
+    <!-- Generated with Rich https://www.textualize.io -->
+    <style>
+
+    @font-face {
+        font-family: "Fira Code";
+        src: local("FiraCode-Regular"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff2/FiraCode-Regular.woff2") format("woff2"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff/FiraCode-Regular.woff") format("woff");
+        font-style: normal;
+        font-weight: 400;
+    }
+    @font-face {
+        font-family: "Fira Code";
+        src: local("FiraCode-Bold"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff2/FiraCode-Bold.woff2") format("woff2"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff/FiraCode-Bold.woff") format("woff");
+        font-style: bold;
+        font-weight: 700;
+    }
+
+    .terminal-3508363316-matrix {
+        font-family: Fira Code, monospace;
+        font-size: 20px;
+        line-height: 24.4px;
+        font-variant-east-asian: full-width;
+    }
+
+    .terminal-3508363316-title {
+        font-size: 18px;
+        font-weight: bold;
+        font-family: arial;
+    }
+
+    .terminal-3508363316-r1 { fill: #c5c8c6;font-weight: bold }
+.terminal-3508363316-r2 { fill: #c5c8c6 }
+.terminal-3508363316-r3 { fill: #cc555a;font-weight: bold }
+.terminal-3508363316-r4 { fill: #868887 }
+.terminal-3508363316-r5 { fill: #68a0b3 }
+.terminal-3508363316-r6 { fill: #98a84b }
+.terminal-3508363316-r7 { fill: #cc555a }
+.terminal-3508363316-r8 { fill: #d0b344 }
+    </style>
+
+    <defs>
+    <clipPath id="terminal-3508363316-clip-terminal">
+      <rect x="0" y="0" width="1560.6" height="291.79999999999995" />
+    </clipPath>
+    <clipPath id="terminal-3508363316-line-0">
+    <rect x="0" y="1.5" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-1">
+    <rect x="0" y="25.9" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-2">
+    <rect x="0" y="50.3" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-3">
+    <rect x="0" y="74.7" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-4">
+    <rect x="0" y="99.1" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-5">
+    <rect x="0" y="123.5" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-6">
+    <rect x="0" y="147.9" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-7">
+    <rect x="0" y="172.3" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-8">
+    <rect x="0" y="196.7" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-9">
+    <rect x="0" y="221.1" width="1561.6" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3508363316-line-10">
+    <rect x="0" y="245.5" width="1561.6" height="24.65"/>
+            </clipPath>
+    </defs>
+
+    <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1578" height="340.8" rx="8"/><text class="terminal-3508363316-title" fill="#c5c8c6" text-anchor="middle" x="789" y="27">oss-pulse&#160;scan</text>
+            <g transform="translate(26,22)">
+            <circle cx="0" cy="0" r="7" fill="#ff5f57"/>
+            <circle cx="22" cy="0" r="7" fill="#febc2e"/>
+            <circle cx="44" cy="0" r="7" fill="#28c840"/>
+            </g>
+        
+    <g transform="translate(9, 41)" clip-path="url(#terminal-3508363316-clip-terminal)">
+    
+    <g class="terminal-3508363316-matrix">
+    <text class="terminal-3508363316-r1" x="0" y="20" textLength="500.2" clip-path="url(#terminal-3508363316-line-0)">$&#160;oss-pulse&#160;scan&#160;take-home&#160;--fail-on&#160;high</text><text class="terminal-3508363316-r2" x="1561.6" y="20" textLength="12.2" clip-path="url(#terminal-3508363316-line-0)">
+</text><text class="terminal-3508363316-r2" x="1561.6" y="44.4" textLength="12.2" clip-path="url(#terminal-3508363316-line-1)">
+</text><text class="terminal-3508363316-r1" x="0" y="68.8" textLength="488" clip-path="url(#terminal-3508363316-line-2)">4&#160;findings:&#160;1&#160;critical,&#160;2&#160;high,&#160;1&#160;medium</text><text class="terminal-3508363316-r2" x="1561.6" y="68.8" textLength="12.2" clip-path="url(#terminal-3508363316-line-2)">
+</text><text class="terminal-3508363316-r3" x="0" y="93.2" textLength="890.6" clip-path="url(#terminal-3508363316-line-3)">This&#160;folder&#160;is&#160;set&#160;up&#160;to&#160;run&#160;code&#160;automatically&#160;when&#160;opened&#160;or&#160;installed.</text><text class="terminal-3508363316-r2" x="1561.6" y="93.2" textLength="12.2" clip-path="url(#terminal-3508363316-line-3)">
+</text><text class="terminal-3508363316-r2" x="1561.6" y="117.6" textLength="12.2" clip-path="url(#terminal-3508363316-line-4)">
+</text><text class="terminal-3508363316-r4" x="0" y="142" textLength="97.6" clip-path="url(#terminal-3508363316-line-5)">severity</text><text class="terminal-3508363316-r4" x="122" y="142" textLength="134.2" clip-path="url(#terminal-3508363316-line-5)">rule&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r4" x="280.6" y="142" textLength="402.6" clip-path="url(#terminal-3508363316-line-5)">where&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r4" x="707.6" y="142" textLength="732" clip-path="url(#terminal-3508363316-line-5)">evidence&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="1561.6" y="142" textLength="12.2" clip-path="url(#terminal-3508363316-line-5)">
+</text><text class="terminal-3508363316-r3" x="0" y="166.4" textLength="97.6" clip-path="url(#terminal-3508363316-line-6)">critical</text><text class="terminal-3508363316-r5" x="122" y="166.4" textLength="134.2" clip-path="url(#terminal-3508363316-line-6)">AUTO-VSCODE</text><text class="terminal-3508363316-r2" x="280.6" y="166.4" textLength="402.6" clip-path="url(#terminal-3508363316-line-6)">.vscode/tasks.json:8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r6" x="707.6" y="166.4" textLength="732" clip-path="url(#terminal-3508363316-line-6)">runOn:&#160;folderOpen&#160;-&gt;&#160;node&#160;public/fonts/fa-solid-900.woff2&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="1561.6" y="166.4" textLength="12.2" clip-path="url(#terminal-3508363316-line-6)">
+</text><text class="terminal-3508363316-r7" x="0" y="190.8" textLength="97.6" clip-path="url(#terminal-3508363316-line-7)">high&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r5" x="122" y="190.8" textLength="134.2" clip-path="url(#terminal-3508363316-line-7)">CODE-HIDDEN</text><text class="terminal-3508363316-r2" x="280.6" y="190.8" textLength="402.6" clip-path="url(#terminal-3508363316-line-7)">public/fonts/fa-solid-900.woff2:1</text><text class="terminal-3508363316-r6" x="707.6" y="190.8" textLength="732" clip-path="url(#terminal-3508363316-line-7)">const&#160;s&#160;=&#160;require(&#x27;child_process&#x27;);&#160;s.exec(x)&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="1561.6" y="190.8" textLength="12.2" clip-path="url(#terminal-3508363316-line-7)">
+</text><text class="terminal-3508363316-r7" x="0" y="215.2" textLength="97.6" clip-path="url(#terminal-3508363316-line-8)">high&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r5" x="122" y="215.2" textLength="134.2" clip-path="url(#terminal-3508363316-line-8)">TYPO-001&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="280.6" y="215.2" textLength="402.6" clip-path="url(#terminal-3508363316-line-8)">requirements.txt&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r6" x="707.6" y="215.2" textLength="732" clip-path="url(#terminal-3508363316-line-8)">reqeusts&#160;(looks&#160;like&#160;requests)&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="1561.6" y="215.2" textLength="12.2" clip-path="url(#terminal-3508363316-line-8)">
+</text><text class="terminal-3508363316-r8" x="0" y="239.6" textLength="97.6" clip-path="url(#terminal-3508363316-line-9)">medium&#160;&#160;</text><text class="terminal-3508363316-r5" x="122" y="239.6" textLength="134.2" clip-path="url(#terminal-3508363316-line-9)">AUTO-NPM&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="280.6" y="239.6" textLength="402.6" clip-path="url(#terminal-3508363316-line-9)">package.json:1&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r6" x="707.6" y="239.6" textLength="732" clip-path="url(#terminal-3508363316-line-9)">&quot;postinstall&quot;:&#160;&quot;node&#160;public/fonts/fa-solid-900.woff2&quot;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-3508363316-r2" x="1561.6" y="239.6" textLength="12.2" clip-path="url(#terminal-3508363316-line-9)">
+</text><text class="terminal-3508363316-r2" x="1561.6" y="264" textLength="12.2" clip-path="url(#terminal-3508363316-line-10)">
+</text><text class="terminal-3508363316-r4" x="0" y="288.4" textLength="573.4" clip-path="url(#terminal-3508363316-line-11)">Static&#160;scan:&#160;nothing&#160;was&#160;executed.&#160;Exit&#160;code&#160;1.</text><text class="terminal-3508363316-r2" x="1561.6" y="288.4" textLength="12.2" clip-path="url(#terminal-3508363316-line-11)">
+</text>
+    </g>
+    </g>
+</svg>
