@@ -57,6 +57,12 @@ class Settings:
     def warehouse_path(self) -> Path:
         return self.data_dir / "warehouse.duckdb"
 
+    @property
+    def dbt_work_dir(self) -> Path:
+        """dbt's target/ and logs/. Never inside the dbt project: an installed package may be
+        read-only, and the CLI, the tests and Dagster must all find the same manifest."""
+        return self.data_dir / "dbt"
+
     def tracked_projects(self) -> list[TrackedProject]:
         with open(self.projects_file) as fh:
             doc = yaml.safe_load(fh)

@@ -103,8 +103,13 @@ def tracked_projects_reference() -> MaterializeResult:
 
 # ----------------------------------------------------------------------------- dbt
 
+# The manifest lives where `oss-pulse transform` / `demo` write it (Settings.dbt_work_dir),
+# not in transform/target, so the CLI and Dagster share one build and nothing is written
+# into the project directory.
 dbt_project = DbtProject(
-    project_dir=settings.dbt_project_dir, profiles_dir=settings.dbt_project_dir
+    project_dir=settings.dbt_project_dir,
+    profiles_dir=settings.dbt_project_dir,
+    target_path=settings.dbt_work_dir / "target",
 )
 dbt_project.prepare_if_dev()
 
@@ -125,7 +130,9 @@ class Translator(DagsterDbtTranslator):
 
 @dbt_assets(manifest=dbt_project.manifest_path, dagster_dbt_translator=Translator())
 def lakehouse_dbt(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
+    # One target dir per run, under the data dir like every other dbt invocation.
+    target = settings.dbt_work_dir / "dagster" / context.run_id[:8]
+    yield from dbt.cli(["build"], context=context, target_path=target).stream()
 
 
 ingest_hourly = define_asset_job(
