@@ -19,13 +19,15 @@ make lint
 | `src/oss_pulse/commands/lakehouse.py` | The GH Archive health pipeline commands (`ingest`, `transform`, `report`, `demo`). |
 | `src/oss_pulse/check/pipeline.py` | One `check` run as named steps: fetch PyPI metadata, detect lookalikes, fetch GitHub activity, detect provenance changes, scan release files, store, decide, load the result. |
 | `src/oss_pulse/check/report.py` | Markdown and JSON output for `check`. |
-| `src/oss_pulse/scan.py` | `scan`: walks a folder and renders its report. |
+| `src/oss_pulse/scan/pipeline.py` | One `scan` run as named steps: find, add lookalike dependencies, flag a planted ignore file, apply the user's ignore file, sort. |
+| `src/oss_pulse/scan/report.py` | Markdown and JSON output for `scan`. |
+| `src/oss_pulse/supplychain/code_scan.py` | File-content checks. Each rule is one small function in `TEXT_CHECKS`; adding a rule means adding one function. |
 | `src/oss_pulse/supplychain/` | Detectors. Each takes data in and returns `Finding`s; none of them fetch, store or print. |
 | `src/oss_pulse/ingest/` | Source clients and bronze writers, one module per source. |
 | `src/oss_pulse/safe_text.py` | Every string from scanned code goes through here before it is printed. |
 | `transform/` | dbt project: the SQL rules and the risk marts. |
 
-Detectors, sources and renderers only meet in `check/pipeline.py` and `scan.py`, so a new detector or a new output format touches one place.
+Detectors, sources and renderers only meet in `check/pipeline.py` and `scan/pipeline.py`, so a new detector or a new output format touches one place.
 
 ## Reporting a wrong result
 
