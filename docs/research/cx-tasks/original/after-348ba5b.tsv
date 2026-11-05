@@ -1,0 +1,16 @@
+# OSS Pulse scripted CX tasks	source=/home/user/oss-pulse@348ba5b	date=2026-11-04T20:33:56Z
+task	result	measure	evidence
+T01-readme-install-copy-pastes	FAIL	-	pip install git+https://github.com/<you>/oss-pulse
+T02-fresh-install	PASS	18s, 73 packages, 575 MB	pip rc=0
+T03-fresh-scan-clean-folder	PASS	rc=0	**0 findings** · 🟢 no findings
+T04-fresh-check-benign-deps	PASS	rc=0, 9s	2026-11-04 20:34:19,683 INFO    oss_pulse.ingest.scorecard | scorecard: 0 checks across 0 repos
+T05-scan-detects-auto-run	PASS	rc=1	**1 findings** · 🔴 1 critical
+T06-planted-ignore-cannot-hide	FAIL	rc=0	**0 findings** · 🟢 no findings
+T07-typo-finding-names-name-and-line	FAIL	rc=0	**1 findings** · 🟠 1 high
+T08-version-flag	FAIL	rc=2	Usage: oss-pulse [OPTIONS] COMMAND [ARGS]...
+T09-report-has-feedback-link	FAIL	-	<sub>Static scan, nothing was executed. Suppress reviewed findings with glob patterns (paths or rule ids) in `.osspulseignore`. `oss-pulse r
+T10-user-error-not-risk-exit	FAIL	rc=1	ValueError: no dependencies found in fx/empty/requirements.txt
+T11-clean-report-coverage-and-caveat	FAIL	-	**0 findings** · 🟢 no findings
+T12-help-security-changelog-feedback	FAIL	-	missing: SECURITY.md SUPPORT.md CHANGELOG.md CONTRIBUTING.md .github/ISSUE_TEMPLATE
+T13-privacy-statement	FAIL	-	RULES.md github-action.md 
+# passed 4 of 13

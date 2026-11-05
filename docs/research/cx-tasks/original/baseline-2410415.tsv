@@ -1,0 +1,16 @@
+# OSS Pulse scripted CX tasks	source=/home/user/oss-pulse@2410415	date=2026-11-04T19:53:05Z
+task	result	measure	evidence
+T01-readme-install-copy-pastes	FAIL	-	pip install git+https://github.com/<you>/oss-pulse
+T02-fresh-install	PASS	19s, 73 packages, 575 MB	pip rc=0
+T03-fresh-scan-clean-folder	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory: 
+T04-fresh-check-benign-deps	FAIL	rc=1, 2s	RuntimeError: dbt build failed - rerun with -v for details
+T05-scan-detects-auto-run	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory: 
+T06-planted-ignore-cannot-hide	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory: 
+T07-typo-finding-names-name-and-line	FAIL	rc=1	FileNotFoundError: [Errno 2] No such file or directory: 
+T08-version-flag	FAIL	rc=2	Usage: oss-pulse [OPTIONS] COMMAND [ARGS]...
+T09-report-has-feedback-link	FAIL	-	
+T10-user-error-not-risk-exit	FAIL	rc=1	ValueError: no dependencies found in fx/empty/requirements.txt
+T11-clean-report-coverage-and-caveat	FAIL	-	FileNotFoundError: [Errno 2] No such file or directory: 
+T12-help-security-changelog-feedback	FAIL	-	missing: SECURITY.md SUPPORT.md CHANGELOG.md CONTRIBUTING.md .github/ISSUE_TEMPLATE
+T13-privacy-statement	FAIL	-	RULES.md github-action.md 
+# passed 1 of 13
