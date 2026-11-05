@@ -1,135 +1,50 @@
 # Roadmap
 
-OSS Pulse already detects supply-chain risk in Python dependencies and untrusted
-repositories (see README). Each milestone below adds one capability *and* one skill that
-data/security engineering hiring managers look for. Open a GitHub issue for each and ship
-it as its own PR - a visible PR history is part of the portfolio.
+What is done, and what comes next, in the order it will be built. Each item was found by a simulated user study or a real-data benchmark (see [docs/research](docs/research/)); the studies used AI-simulated personas, not real users.
 
-Status key: ⬜ todo · 🟨 in progress · ✅ done
+## Done
 
----
+- Fresh installs work: the typosquat list and the dbt project ship in the wheel, and CI installs the built wheel into an empty environment.
+- A scanned folder cannot silence its own findings; an `.osspulseignore` inside it is reported as EVADE-IGNORE.
+- Text quoted from scanned files cannot inject terminal escapes, CI workflow commands, or Markdown links, images, HTML or mentions into reports.
+- dbt sends no usage statistics and writes nothing into the installed package.
+- The scripted customer task suite (`scripts/cx_tasks.sh`) and the copy linter (`scripts/anti_tells.py`) are committed, with baselines.
 
-## Milestone 0: Ship it and get real users ⬜
-*Skills: product sense, communication - this matters more than any feature below*
+## Correctness and safety of the scanner
 
-- [ ] Push to GitHub, enable the dogfooding workflow, cut a `v0.1.0` release and tag.
-- [ ] Publish to PyPI **with Trusted Publishing** (practise what PROV-001 preaches).
-- [ ] Run `oss-pulse check` against 20 popular open-source projects' requirements and
-      write up what you found (responsibly - report real issues privately first).
-- [ ] Post the write-up (blog, LinkedIn, r/Python, Hacker News). Link it in the README.
+- Auto-run files can't crash the scan, slip past AUTO-VSCODE, or hide in a nested folder.
+- No file in a scanned folder or release can hang the scanner or exhaust its memory.
+- Port the adjudicated scanner prototype without its quadratic paths: nothing at medium or above on the top 250.
+- Lookalike names graded by edit strength and metadata, safe for established names offline; scan quotes the name and the line.
+- One verdict per finding (hold, review, watch, note), upkeep is never a threat, one default gate, brand words in the SQL.
+- Exit codes mean one thing each, nothing ends in a traceback, output can't crash on encoding, every dependency knows its line.
+- The Action fails closed, keeps runs and comments apart, works on fork PRs and shallow checkouts, and installs nothing unpinned.
+- check never shows a row as clear when a signal or a declared line wasn't checked, and says which, why and how to fix it.
+- scan reads where attackers hide code, bounds its walk, and lists everything it didn't read.
 
-## Milestone S1: Lockfiles and transitive dependencies ⬜
-*Skills: graph data modelling*
+## The brand on every surface, and fewer rough edges
 
-- [ ] Parse `uv.lock`, `poetry.lock` and `pip-compile` output with exact pinned versions.
-- [ ] Model the dependency graph (`dim_packages`, `bridge_dependency_edges`) and report
-      *paths*: "your app → libA → evil-lib". Most real compromises arrive transitively.
-- [ ] Diff mode for PRs: only report packages whose resolved version changed.
+- Commit the brand and apply it to every surface: terminal, errors, help, PR comment, job summary, annotations, README, action.yml, dashboard, rule text.
+- Every rule says what to do and where it has been seen, with a source; a guide for people who already opened the folder.
+- Read requirements files the way pip does, check the lines wp-09 lists, and explain the files check can't read.
+- Assess the version and source pip installs: Poetry constraints, direct URLs, pins that don't exist.
+- Scan the .zip or .tar.gz a recruiter sent without extracting it, and say what to do with a link.
+- Catch the other ways a take-home runs code: dev containers, hooks that run local files, fetch-then-eval loaders.
+- check reads the wheel pip would install and every file in it, with no allowlist or BOM bypass for .pth, and no string-literal false positive.
+- Accept a reviewed finding or upkeep label with a reason and an expiry, from your own policy file, shown in every report.
+- The same result on Windows, macOS, non-UTF-8 streams, narrow terminals and without colour.
+- Docs that match behaviour: an install line that works, honest limits, how it fits with other tools, a roadmap for users.
 
-## Milestone S2: More detectors ⬜
-*Skills: security research, precision/recall evaluation*
+## Outputs other tools can use, and proof in CI
 
-- [ ] **Maintainer change** detection: snapshot PyPI ownership daily (bronze history) and
-      flag new owners shortly before a release - the account-takeover precursor.
-- [ ] **Starjacking**: verify the linked repo actually contains this package
-      (compare its `pyproject.toml` name).
-- [ ] **sdist vs. git diff**: compare files in the release with the git tag
-      (catches Ultralytics-style build injection directly).
-- [ ] **npm ecosystem**: `package.json`/`package-lock.json` support (Shai-Hulud class).
-- [ ] Build an evaluation set from the OpenSSF malicious-packages dataset + top-1000
-      benign packages; publish precision/recall per rule in `docs/benchmarks.md`.
+- Results other tools can build on: a versioned JSON envelope, SARIF, baselines and a PR diff view.
+- First run without surprises: an offline demo, doctor, init, a pre-commit hook, and no data left in your project.
+- Ways to report, dispute and contribute: SECURITY, SUPPORT, PRIVACY, CONTRIBUTING, CHANGELOG, issue forms, a page for flagged maintainers.
+- Proof that stays true: the task suite and both benchmarks in CI, a held-out set behind the precision claims, research docs generated from them.
 
-## Milestone S3: Continuous monitoring ⬜
-*Skills: streaming, alerting, SLAs*
+## Later
 
-- [ ] Watch PyPI's new-release feed and re-check affected dependencies within minutes.
-- [ ] Alert (Slack/email/GitHub issue) when a dependency's risk level increases.
-- [ ] Track rule hit-rates and false-positive reports over time in the warehouse.
-
----
-
-# Ecosystem analytics track (original lakehouse)
-
-## Milestone 1: Real data at real scale ⬜
-*Skills: performance, backfills, working with messy production data*
-
-- [ ] Backfill 30 days of real GH Archive (`make ingest START=… END=…`) and record wall-clock
-      time, peak memory, and bronze size per day in `docs/benchmarks.md`.
-- [ ] Parallelise ingestion across hours (`concurrent.futures`, bounded workers). Show the speedup.
-- [ ] GitHub changed public event payloads over the years (fields have been trimmed or
-      removed). Profile real payloads with DuckDB, find the fields our `int_*` models depend
-      on that are sometimes missing, and handle them. Write up what you found.
-- [ ] Handle **repo renames and transfers**: track projects by `repo_id` instead of name.
-      Hint: resolve the IDs once through the GitHub REST API into the reference table.
-
-**Done when:** a 30-day real backfill runs, all dbt tests pass, and the benchmark doc exists.
-
-## Milestone 2: Table format and object storage ⬜
-*Skills: lakehouse table formats, cloud storage*
-
-- [ ] Run MinIO in `docker-compose.yml` and write bronze to `s3://` (PyArrow `S3FileSystem`,
-      DuckDB `httpfs`).
-- [ ] Move bronze from raw Parquet to **Apache Iceberg** (via `pyiceberg`) or **Delta Lake**
-      (via `deltalake`). Use partition overwrite for idempotency. Demonstrate time travel.
-- [ ] Write an ADR (`docs/adr/0001-table-format.md`) explaining the choice.
-
-## Milestone 3: SCD Type 2 and richer modelling ⬜
-*Skills: dimensional modelling*
-
-- [ ] Use a dbt **snapshot** to track repo metadata (description, license, default branch,
-      archived flag, all from the GitHub API) as SCD Type 2: `dim_repos_history`.
-- [ ] Add `dim_contributors` with first-contribution date, and a "new contributor retention"
-      metric: the share of first-time PR authors who come back within 30 days.
-- [ ] Add a **dbt semantic layer / metrics** definition for the health score inputs.
-
-## Milestone 4: Streaming ingestion ⬜
-*Skills: streaming, exactly-once thinking*
-
-- [ ] Add a Redpanda (Kafka API) container. Write a producer that polls the GitHub Events API
-      (`/events`, with ETag and `X-Poll-Interval` handling) and publishes to a topic.
-- [ ] Write a consumer that micro-batches into the same bronze contract, keyed by event id.
-      Document your delivery semantics and why dedupe-by-`event_id` downstream makes them safe.
-- [ ] Reconcile the streaming data against the batch GH Archive data for the same hour.
-
-## Milestone 5: Observability and data SLAs ⬜
-*Skills: running pipelines in production*
-
-- [ ] dbt **source freshness** on `_ingested_at` with warn/error thresholds.
-- [ ] Export run metrics (rows, rejects, duration) to a `meta.pipeline_runs` table and chart
-      them on a dashboard page.
-- [ ] Dagster **sensors** that alert (Slack webhook or email) when the reject rate or
-      freshness SLA is breached.
-- [ ] Anomaly detection on daily event volume per repo (z-score over a trailing 28 days) as an
-      asset check.
-
-## Milestone 6: Cloud deployment ⬜
-*Skills: infrastructure as code, cost awareness*
-
-- [ ] Terraform for one cloud (GCS + BigQuery, or S3 + Athena/MotherDuck). Swap the dbt
-      target with no SQL changes, or document the dialect differences you hit.
-- [ ] Bonus: GH Archive is also published as a public BigQuery dataset. Compare the cost and
-      latency of "query BigQuery directly" against "ingest it yourself", with numbers.
-- [ ] Publish the dashboard (Streamlit Community Cloud or similar) and put the link at the top
-      of the README.
-
-## Milestone 7: Give it back to open source ⬜
-*Skills: community, communication*
-
-- [ ] Publish a weekly "OSS health report" (a generated Markdown file committed by a scheduled
-      GitHub Action).
-- [ ] Write a blog post covering the architecture, one surprising finding from real data, and
-      one bug you hit and how you fixed it. Link it from the README.
-- [ ] Make the repo welcoming: `CONTRIBUTING.md`, issue templates, and a `good first issue`
-      label (adding a project to `tracked_projects.yml` is a perfect one).
-
----
-
-### How to talk about this in an interview
-
-Be ready to whiteboard these:
-0. *"Walk me through how your tool would have caught the Ultralytics compromise."* (PROV-001, REL-003, artifact scan; and what it would have missed)
-1. *"What happens if the job dies halfway through writing an hour?"* (atomic rename, manifests, reconciliation)
-2. *"A file arrives late, or GH Archive republishes an hour. What do you do?"* (idempotent partitions, `delete+insert` incremental)
-3. *"GitHub changes the payload schema tomorrow. What breaks?"* (nothing in bronze; dbt tests flag the gap)
-4. *"How would this scale to the full 5+ years of history?"* (Milestones 1, 2 and 6)
-5. *"Why DuckDB rather than Spark?"* (data size per partition, cost, and when you *would* switch)
+- Lockfiles and transitive dependency paths (uv.lock, poetry.lock).
+- npm dependency trees.
+- Continuous monitoring of new PyPI releases, with alerts when a dependency's verdict changes.
+- Real user sessions with the kit in docs/research, reported separately from the simulated studies.

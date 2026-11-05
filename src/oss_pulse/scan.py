@@ -20,7 +20,7 @@ from oss_pulse.supplychain.findings import SEVERITY_RANK, Finding
 from oss_pulse.supplychain.repo_scan import scan_repository
 
 IGNORE_FILE = ".osspulseignore"
-ICONS = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵", "info": "⚪"}
+ICONS = {s: s for s in ("critical", "high", "medium", "low", "info")}  # plain words, no emoji
 
 
 @dataclass
@@ -97,7 +97,7 @@ def _planted_ignore_finding(root: Path, planted: Path, findings: list[Finding]) 
 def render_scan_markdown(result: ScanResult) -> str:
     findings = result.findings
     counts = {s: sum(f.severity == s for f in findings) for s in ICONS}
-    summary = " · ".join(f"{ICONS[s]} {n} {s}" for s, n in counts.items() if n) or "🟢 no findings"
+    summary = ", ".join(f"{n} {s}" for s, n in counts.items() if n) or "no rule matched"
     lines = [
         "<!-- oss-pulse-scan -->",
         f"## Repository scan: {md_code(result.root.name, in_table=False)}",
@@ -117,7 +117,7 @@ def render_scan_markdown(result: ScanResult) -> str:
         lines += ["| Severity | Rule | Finding | Where | Evidence |", "|---|---|---|---|---|"]
         for f in findings:
             lines.append(
-                f"| {ICONS[f.severity]} {f.severity} | {f.rule_id} | {md_text(f.title)}: "
+                f"| {f.severity} | {f.rule_id} | {md_text(f.title)}: "
                 f"{md_text(f.detail)} | {md_code(f.location)} | {md_code(f.evidence, 100)} |"
             )
     if result.suppressed:

@@ -176,7 +176,7 @@ def scan(
     markdown: Path = typer.Option(None, help="Also write the Markdown report here"),
     json_out: Path = typer.Option(None, "--json", help="Also write the JSON report here"),
 ) -> None:
-    """Inspect an untrusted repository BEFORE opening or installing it.
+    """Read an untrusted repository before you open or install it.
 
     Catches auto-run VS Code tasks, npm install hooks, malicious setup.py/.pth files,
     obfuscated or hidden payloads, credential/wallet stealers, exfiltration endpoints,
