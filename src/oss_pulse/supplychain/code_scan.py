@@ -186,10 +186,6 @@ def _snippet(text: str, pos: int, width: int = 140) -> str:
     return line
 
 
-def _first(pattern: re.Pattern, text: str):
-    return pattern.search(text)
-
-
 def _hit(rule_id: str, file: str, text: str, m: re.Match, **kw) -> Hit:
     return Hit(rule_id, file, _line_of(text, m.start()), _snippet(text, m.start()), **kw)
 
@@ -275,88 +271,149 @@ def scan_setup_py(file: str, text: str) -> list[Hit]:
     return hits
 
 
+@dataclass(frozen=True)
+class SourceFile:
+    path: str
+    text: str
+    context: str
+
+    @property
+    def name(self) -> str:
+        return PurePosixPath(self.path).name
+
+    @property
+    def is_python(self) -> bool:
+        return self.name.endswith((".py", ".pyw", ".pth"))
+
+    @property
+    def is_javascript(self) -> bool:
+        return self.name.endswith((".js", ".cjs", ".mjs", ".ts"))
+
+    @property
+    def is_build_output(self) -> bool:
+        wrapped = f"/{self.path}"
+        return self.name.endswith(".min.js") or "/dist/" in wrapped or "/build/" in wrapped
+
+    @property
+    def runs_at_install(self) -> bool:
+        return self.name in {"setup.py", "__init__.py"} or self.name.endswith(".pth")
+
+    def find(self, pattern: str) -> re.Match | None:
+        return RE[pattern].search(self.text)
+
+    def hit(self, rule_id: str, match: re.Match, **extra) -> Hit:
+        return _hit(rule_id, self.path, self.text, match, **extra)
+
+
+def _python_obfuscation(src: SourceFile) -> list[Hit]:
+    if src.is_python and (m := src.find("obf_py")):
+        return [src.hit("CODE-OBF", m)]
+    return []
+
+
+def _javascript_obfuscation(src: SourceFile) -> list[Hit]:
+    if src.is_javascript and not src.is_build_output and (m := src.find("obf_js")):
+        return [src.hit("CODE-JSOBF", m)]
+    return []
+
+
+def _shell_download_and_run(src: SourceFile) -> list[Hit]:
+    m = src.find("dl_shell") or src.find("dl_ps")
+    return [src.hit("CODE-DLEXEC", m)] if m else []
+
+
+def _python_download_and_run_at_install(src: SourceFile) -> list[Hit]:
+    if not (src.is_python and src.runs_at_install):
+        return []
+    download = src.find("py_download")
+    if download and src.find("py_exec"):
+        return [src.hit("CODE-DLEXEC", download, detail="downloads then executes")]
+    return []
+
+
+def _exfiltration_endpoint(src: SourceFile) -> list[Hit]:
+    if m := src.find("exfil"):
+        return [src.hit("CODE-EXFIL", m)]
+    if m := src.find("raw_ip_url"):
+        return [
+            src.hit("CODE-EXFIL", m, severity="medium", detail="hard-coded public IP address URL")
+        ]
+    return []
+
+
+def _secret_theft(src: SourceFile) -> list[Hit]:
+    if m := src.find("wallet_browser"):
+        return [src.hit("CODE-SECRETS", m, detail="browser or crypto-wallet data")]
+    sends_data_out = src.find("exfil") or src.find("envdump")
+    if (m := src.find("cloud_creds")) and sends_data_out:
+        detail = "credential file access in a file that also sends data out"
+        return [src.hit("CODE-SECRETS", m, detail=detail)]
+    return []
+
+
+def _environment_dump(src: SourceFile) -> list[Hit]:
+    m = src.find("envdump")
+    return [src.hit("CODE-ENVDUMP", m)] if m else []
+
+
+def _clipboard_wallet_swap(src: SourceFile) -> list[Hit]:
+    if (m := src.find("clipboard")) and src.find("wallet_addr"):
+        return [src.hit("CODE-CLIP", m)]
+    return []
+
+
+def _code_hidden_after_whitespace(src: SourceFile) -> list[Hit]:
+    if not src.is_build_output and (m := src.find("hidden_ws")):
+        return [src.hit("CODE-HIDDEN", m, detail="code hidden after long whitespace")]
+    return []
+
+
+LONG_LINE = 5000
+
+
+def _very_long_javascript_line(src: SourceFile) -> list[Hit]:
+    if not (src.is_javascript and not src.is_build_output and src.context == "repo"):
+        return []
+    if any(len(line) > LONG_LINE for line in src.text.splitlines()):
+        evidence = f"single line longer than {LONG_LINE:,} characters"
+        detail = "very long line outside build output"
+        return [Hit("CODE-JSOBF", src.path, 1, evidence, severity="medium", detail=detail)]
+    return []
+
+
+def _setup_py_install_hooks(src: SourceFile) -> list[Hit]:
+    return scan_setup_py(src.path, src.text) if src.name == "setup.py" else []
+
+
+def _executable_pth_file(src: SourceFile) -> list[Hit]:
+    if not src.name.endswith(".pth") or any(known in src.name for known in PTH_ALLOWLIST):
+        return []
+    for number, line in enumerate(src.text.splitlines(), 1):
+        if line.lstrip().startswith(("import ", "import\t")):
+            return [Hit("CODE-PTH", src.path, number, line.strip()[:140])]
+    return []
+
+
+TEXT_CHECKS = (
+    _python_obfuscation,
+    _javascript_obfuscation,
+    _shell_download_and_run,
+    _python_download_and_run_at_install,
+    _exfiltration_endpoint,
+    _secret_theft,
+    _environment_dump,
+    _clipboard_wallet_swap,
+    _code_hidden_after_whitespace,
+    _very_long_javascript_line,
+    _setup_py_install_hooks,
+    _executable_pth_file,
+)
+
+
 def scan_text(file: str, text: str, context: str) -> list[Hit]:
-    """Regex heuristics for any source-like file. context: sdist | wheel | repo."""
-    hits: list[Hit] = []
-    name = PurePosixPath(file).name
-    is_py = name.endswith((".py", ".pyw", ".pth"))
-    is_js = name.endswith((".js", ".cjs", ".mjs", ".ts"))
-    minified = name.endswith(".min.js") or "/dist/" in f"/{file}" or "/build/" in f"/{file}"
-    install_time = name in {"setup.py", "__init__.py"} or name.endswith(".pth")
-
-    if is_py and (m := _first(RE["obf_py"], text)):
-        hits.append(_hit("CODE-OBF", file, text, m))
-    if is_js and not minified and (m := _first(RE["obf_js"], text)):
-        hits.append(_hit("CODE-JSOBF", file, text, m))
-    for key in ("dl_shell", "dl_ps"):
-        if m := _first(RE[key], text):
-            hits.append(_hit("CODE-DLEXEC", file, text, m))
-            break
-    if (
-        is_py
-        and install_time
-        and (d := _first(RE["py_download"], text))
-        and _first(RE["py_exec"], text)
-    ):
-        hits.append(_hit("CODE-DLEXEC", file, text, d, detail="downloads then executes"))
-
-    exfil = _first(RE["exfil"], text)
-    if exfil:
-        hits.append(_hit("CODE-EXFIL", file, text, exfil))
-    elif m := _first(RE["raw_ip_url"], text):
-        hits.append(
-            _hit(
-                "CODE-EXFIL",
-                file,
-                text,
-                m,
-                severity="medium",
-                detail="hard-coded public IP address URL",
-            )
-        )
-    if m := _first(RE["wallet_browser"], text):
-        hits.append(_hit("CODE-SECRETS", file, text, m, detail="browser or crypto-wallet data"))
-    elif (m := _first(RE["cloud_creds"], text)) and (exfil or _first(RE["envdump"], text)):
-        hits.append(
-            _hit(
-                "CODE-SECRETS",
-                file,
-                text,
-                m,
-                detail="credential file access in a file that also sends data out",
-            )
-        )
-    if m := _first(RE["envdump"], text):
-        hits.append(_hit("CODE-ENVDUMP", file, text, m))
-    if (m := _first(RE["clipboard"], text)) and _first(RE["wallet_addr"], text):
-        hits.append(_hit("CODE-CLIP", file, text, m))
-    if not minified and (m := _first(RE["hidden_ws"], text)):
-        hits.append(_hit("CODE-HIDDEN", file, text, m, detail="code hidden after long whitespace"))
-    if (
-        is_js
-        and not minified
-        and context == "repo"
-        and any(len(ln) > 5000 for ln in text.splitlines())
-    ):
-        hits.append(
-            Hit(
-                "CODE-JSOBF",
-                file,
-                1,
-                "single line longer than 5,000 characters",
-                severity="medium",
-                detail="very long line outside build output",
-            )
-        )
-
-    if name == "setup.py":
-        hits.extend(scan_setup_py(file, text))
-    if name.endswith(".pth") and not any(a in name for a in PTH_ALLOWLIST):
-        for i, line in enumerate(text.splitlines(), 1):
-            if line.lstrip().startswith(("import ", "import\t")):
-                hits.append(Hit("CODE-PTH", file, i, line.strip()[:140]))
-                break
-    return hits
+    """Run every text check on a source-like file. context: sdist | wheel | repo."""
+    src = SourceFile(file, text, context)
+    return [hit for check in TEXT_CHECKS for hit in check(src)]
 
 
 NOT_INSTALLED = re.compile(
