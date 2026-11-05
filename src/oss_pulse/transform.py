@@ -25,7 +25,7 @@ def run_dbt(settings: Settings, args: list[str], quiet: bool = False) -> bool:
     dbt_env(settings)
     ensure_bronze_layout(settings)
     project = str(settings.dbt_project_dir)
-    work = settings.data_dir / "dbt"
+    work = settings.dbt_work_dir
     flags = ["--quiet"] if quiet else []
     result = dbtRunner().invoke(
         [
