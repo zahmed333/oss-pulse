@@ -1,0 +1,32 @@
+/* oss-pulse tokens. Colour means a verdict, and only hold gets one.
+   Contrast (WCAG 2.x) is in brand.md; every text token is 5.8:1 or better on both backgrounds. */
+:root {
+  --bg: #FFFFFF;
+  --bg-raised: #F3F4F5;
+  --text: #16181A;
+  --text-dim: #596067;
+  --rule: #D9DDE1;
+  --hold: #B3261E;
+  --font-prose: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121416;
+    --bg-raised: #1B1E21;
+    --text: #E6E8EA;
+    --text-dim: #9CA3AA;
+    --rule: #2C3136;
+    --hold: #F47C70;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121416;
+  --bg-raised: #1B1E21;
+  --text: #E6E8EA;
+  --text-dim: #9CA3AA;
+  --rule: #2C3136;
+  --hold: #F47C70;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--font-prose); }
+code, pre, kbd { font-family: var(--font-mono); font-variant-ligatures: none; }
