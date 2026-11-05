@@ -33,7 +33,7 @@ What is done, and what comes next, in the order it will be built. Each item was 
 - check reads the wheel pip would install and every file in it, with no allowlist or BOM bypass for .pth, and no string-literal false positive.
 - Accept a reviewed finding or upkeep label with a reason and an expiry, from your own policy file, shown in every report.
 - The same result on Windows, macOS, non-UTF-8 streams, narrow terminals and without colour.
-- Docs that match behaviour: an install line that works, honest limits, how it fits with other tools, a roadmap for users.
+- Docs that match behaviour: a working install line, documented limits, a comparison with other tools, a roadmap for users.
 
 ## Outputs other tools can use, and proof in CI
 
