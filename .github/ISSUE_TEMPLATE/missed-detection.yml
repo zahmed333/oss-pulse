@@ -1,0 +1,17 @@
+name: Missed detection
+description: oss-pulse did not flag something it should have
+labels: [missed-detection]
+body:
+  - type: markdown
+    attributes:
+      value: Don't paste or attach live malware. Describe the technique, or link to an advisory or write-up.
+  - type: textarea
+    id: technique
+    attributes: { label: What should have been caught }
+    validations: { required: true }
+  - type: input
+    id: reference
+    attributes: { label: Advisory, write-up or package name }
+  - type: textarea
+    id: output
+    attributes: { label: What oss-pulse printed, render: text }

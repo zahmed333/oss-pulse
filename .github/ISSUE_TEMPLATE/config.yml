@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security problem in oss-pulse
+    url: https://github.com/zahmed333/oss-pulse/security/advisories/new
+    about: Private report. Use this for ways to evade, suppress or exploit the scanner.

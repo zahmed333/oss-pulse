@@ -1,21 +1,36 @@
-<p><picture>
+<div align="center">
+
+<picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo-dark.svg">
-  <img alt="oss-pulse" src="docs/brand/logo.svg" height="32">
-</picture></p>
+  <img alt="oss-pulse" src="docs/brand/logo.svg" height="44">
+</picture>
 
-**oss-pulse checks code for malware before you run it.** Point it at a folder someone sent you, or at your project's Python dependencies. It reads the files and package metadata, executes nothing, and tells you which lines would run code on your machine and when.
+### Check code for malware before you run it
 
-## The problem it solves
+Scan a folder someone sent you, or your Python dependencies, for supply-chain attacks.<br>
+Nothing is executed. Every finding points to the file, the line and the bytes that matched.
+
+[![CI](https://github.com/zahmed333/oss-pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/zahmed333/oss-pulse/actions/workflows/ci.yml)
+[![Supply chain](https://github.com/zahmed333/oss-pulse/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/zahmed333/oss-pulse/actions/workflows/supply-chain.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
+
+[Quick start](#quick-start) · [What it checks](#what-it-checks) · [GitHub Action](#in-ci) · [How it works](#how-it-works) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
+
+<img src="docs/brand/scan-example.svg" alt="oss-pulse scan output for a fake take-home assignment: an auto-run VS Code task, JavaScript hidden in a font file, a typosquatted dependency and an npm install hook" width="860">
+
+</div>
+
+## Why
 
 oss-pulse is built for two attacks that antivirus and vulnerability scanners don't catch.
 
-**1. The take-home assignment that hacks you when you open it.** A "recruiter" sends a coding test as a zip or a GitHub link. Inside, `.vscode/tasks.json` has a task set to `"runOn": "folderOpen"`, so VS Code runs it the moment you trust the folder. The script it runs is disguised as a font file. This is the Contagious Interview campaign, named by security researchers in 2023, aimed at developers with crypto wallets on their laptops. Antivirus doesn't flag it, because it is a text file in a project, not an executable.
+| Attack | What happens | Why other tools miss it |
+|---|---|---|
+| Fake job-interview take-home ("Contagious Interview", named in 2023) | A recruiter sends a coding test. `.vscode/tasks.json` runs a script disguised as a font file the moment you trust the folder in VS Code. | It is a text file in a project, so antivirus ignores it. |
+| Poisoned release of a trusted package (Ultralytics 8.3.41, December 2024) | A new version on PyPI contains a crypto miner. The code exists only in the PyPI download, never in the GitHub repository. | pip-audit and Dependabot only know about vulnerabilities after someone files one. |
 
-**2. A package you already trust ships a poisoned release.** In December 2024, Ultralytics 8.3.41 was published to PyPI with a crypto miner in it. The malicious code was only in the file on PyPI, never in the GitHub repository, so reviewing the source on GitHub would not have shown it. `pip-audit` and Dependabot only report vulnerabilities that are already in a database, and on release day this one wasn't.
-
-oss-pulse checks for both before anything runs.
-
-## Try it
+## Quick start
 
 ```sh
 pip install git+https://github.com/zahmed333/oss-pulse   # not on PyPI yet
@@ -25,18 +40,22 @@ oss-pulse check requirements.txt            # the packages you are about to inst
 oss-pulse rules                             # every rule, and the attack it comes from
 ```
 
-Here is the report for an inert copy of a fake take-home (the folder is built in the test suite; nothing in it is real malware):
+`scan` exits 1 when it finds something at or above `--fail-on`, so `oss-pulse scan ~/take-home --fail-on high && code ~/take-home` only opens a folder that passed. The example above is an inert fixture from the test suite; nothing in it is real malware.
 
-| Severity | Rule | Finding | Where | Evidence |
-|---|---|---|---|---|
-| critical | AUTO-VSCODE | VS Code task runs automatically when the folder is opened | `.vscode/tasks.json:8` | `sync-fonts: node public/fonts/fa-solid-900.woff2` |
-| high | CODE-HIDDEN | Script content inside a .woff2 file | `public/fonts/fa-solid-900.woff2:1` | `const s = require('child_process'); s.exec(x)` |
-| high | TYPO-001 | Dependency is one edit away from `requests` | `requirements.txt` | `reqeusts` |
-| medium | AUTO-NPM | npm script runs on install | `package.json:1` | `"postinstall": "node public/fonts/fa-solid-900.woff2"` |
+## How it works
 
-Opening the folder runs a "font" that is really JavaScript able to start programs, and `npm install` runs the same file again. The command exits 1, so `oss-pulse scan ~/take-home --fail-on high && code ~/take-home` will not open it.
+```mermaid
+flowchart LR
+    A["Your folder or<br/>requirements.txt"] --> B["Fetch<br/>PyPI · GitHub · OSV<br/>release files"]
+    B --> C["Detect<br/>read files as data,<br/>never run them"]
+    C --> D["Store<br/>Parquet tables"]
+    D --> E["Decide<br/>SQL rules in dbt + DuckDB"]
+    E --> F["Report<br/>terminal · PR comment<br/>JSON · exit code"]
+```
 
-## What each command checks
+Fetch the data, read the code without running it, store everything in tables, apply the rules in SQL, report. The [architecture section](#architecture) explains why each step exists.
+
+## What it checks
 
 `oss-pulse scan <folder>` needs no network and never executes anything in the folder. It looks for:
 
@@ -71,30 +90,6 @@ If GitHub, OSV or Scorecard can't be reached, the report says which source was m
 
 The Action fails the job at the level you choose and keeps one PR comment up to date. This repository runs it on itself: [supply-chain.yml](.github/workflows/supply-chain.yml). Details in [docs/github-action.md](docs/github-action.md).
 
-## Why there is a data pipeline inside
-
-`scan` is plain Python. `check` is a small data pipeline. The table below says what each part does.
-
-One check pulls data from seven sources: your dependency file, PyPI metadata, PyPI's attestation API, the release files, GitHub, OSV and Scorecard. Several rules need data from more than one of them. For example, "this release has no attestation, but the previous one did" compares two releases, and "this package links to repository X but was attested from repository Y" combines PyPI and GitHub data. Those rules are written as SQL joins.
-
-| Step | What it does | Why it is needed |
-|---|---|---|
-| Fetch and cache (Python, httpx) | Downloads each source once and saves the raw response to disk | Re-running a check makes no new requests, and every finding can be traced to the exact response it came from, for example when a maintainer disputes a result. |
-| Detectors (Python AST and regex) | Read release files and folders as data, in memory, with size limits and SHA-256 checks | Untrusted code must never be imported, unpacked to disk or run. |
-| Bronze tables (Parquet) | Store all sources in one typed format, partitioned by date | Seven sources with different shapes become tables with fixed schemas. A source that changes its API breaks loudly here instead of silently producing wrong verdicts. |
-| Rules and verdicts (dbt on DuckDB) | Join the sources and apply release and maintenance rules; dbt tests check the results | Rules live in reviewable SQL with tests, and thresholds such as "a release under 7 days old" are settings, not code edits. DuckDB runs inside the process: no database server. |
-| Report | Markdown for PR comments, JSON for scripts, an exit code for CI | One table of findings feeds every output, so a new detector needs no reporting changes. |
-
-The same storage also powers a second, separate use: tracking the health of open-source projects over time from the GH Archive event stream (`oss-pulse demo`, `make dashboard`, `make dagster`). That part uses Dagster for hourly scheduling and Streamlit for a dashboard. It is not needed for `scan` or `check`.
-
-## How results are decided
-
-A missing signal is reported, never guessed. If GitHub is unreachable, the report says "GitHub not reachable" rather than "repository not found", and `--strict` turns any missing source into a CI failure.
-
-False positives are fixed like any other bug, because people stop using a tool that flags numpy. Behaviour that legitimate libraries need, such as reading `~/.aws/credentials` or compiling C extensions, only counts when stronger evidence is also present. This is not solved yet: on the 250 most-downloaded PyPI packages, 16% still get a medium or higher finding. A fix that brings that to zero has been prototyped and is first on the [roadmap](ROADMAP.md).
-
-Every result names its rule, file, line and the exact bytes that matched. There is no combined risk score.
-
 ## FAQ
 
 ### How do I check if a coding assignment from a recruiter is malware?
@@ -125,6 +120,30 @@ Add the oss-pulse Action to your workflow (see [In CI](#in-ci)) with `fail-on: h
 
 No. `scan` makes no network requests. `check` sends package names to PyPI, OSV.dev, GitHub and OpenSSF Scorecard to look them up, and nothing else. Neither command executes code from what it inspects.
 
+## Architecture
+
+`scan` is plain Python with no network access. `check` is a small data pipeline, because its rules need data from several sources at once.
+
+One check pulls data from seven sources: your dependency file, PyPI metadata, PyPI's attestation API, the release files, GitHub, OSV and Scorecard. Several rules need data from more than one of them. For example, "this release has no attestation, but the previous one did" compares two releases, and "this package links to repository X but was attested from repository Y" combines PyPI and GitHub data. Those rules are written as SQL joins.
+
+| Step | What it does | Why it is needed |
+|---|---|---|
+| Fetch and cache (Python, httpx) | Downloads each source once and saves the raw response to disk | Re-running a check makes no new requests, and every finding can be traced to the exact response it came from, for example when a maintainer disputes a result. |
+| Detectors (Python AST and regex) | Read release files and folders as data, in memory, with size limits and SHA-256 checks | Untrusted code must never be imported, unpacked to disk or run. |
+| Bronze tables (Parquet) | Store all sources in one typed format, partitioned by date | Seven sources with different shapes become tables with fixed schemas. A source that changes its API breaks loudly here instead of silently producing wrong verdicts. |
+| Rules and verdicts (dbt on DuckDB) | Join the sources and apply release and maintenance rules; dbt tests check the results | Rules live in reviewable SQL with tests, and thresholds such as "a release under 7 days old" are settings, not code edits. DuckDB runs inside the process: no database server. |
+| Report | Markdown for PR comments, JSON for scripts, an exit code for CI | One table of findings feeds every output, so a new detector needs no reporting changes. |
+
+The same storage also powers a second, separate use: tracking the health of open-source projects over time from the GH Archive event stream (`oss-pulse demo`, `make dashboard`, `make dagster`). That part uses Dagster for hourly scheduling and Streamlit for a dashboard. It is not needed for `scan` or `check`.
+
+## How results are decided
+
+A missing signal is reported, never guessed. If GitHub is unreachable, the report says "GitHub not reachable" rather than "repository not found", and `--strict` turns any missing source into a CI failure.
+
+False positives are fixed like any other bug, because people stop using a tool that flags numpy. Behaviour that legitimate libraries need, such as reading `~/.aws/credentials` or compiling C extensions, only counts when stronger evidence is also present. This is not solved yet: on the 250 most-downloaded PyPI packages, 16% still get a medium or higher finding. A fix that brings that to zero has been prototyped and is first on the [roadmap](ROADMAP.md).
+
+Every result names its rule, file, line and the exact bytes that matched. There is no combined risk score.
+
 ## Development
 
 ```bash
@@ -142,6 +161,10 @@ Set `GITHUB_TOKEN` for 5,000 GitHub API requests per hour (60 without one).
 - It is static analysis plus metadata. A determined attacker can evade heuristics, so treat a clean report as "no known red flags", not "safe".
 - It covers Python dependencies and repository contents. It does not check Homebrew, npm dependency trees, IDE extensions, or what is already running on your machine.
 - Only direct dependencies are checked; lockfile and transitive support is on the [roadmap](ROADMAP.md).
+
+## Contributing
+
+Bug reports, false positives and missed detections are the most useful contributions. Open an issue with the command you ran and the output. New detection rules are welcome: each rule lives in `src/oss_pulse/supplychain/rules.py`, needs a test with an inert fixture, and is documented in [docs/RULES.md](docs/RULES.md). See [CONTRIBUTING.md](CONTRIBUTING.md); report security problems in oss-pulse itself as described in [SECURITY.md](SECURITY.md).
 
 ## License
 
