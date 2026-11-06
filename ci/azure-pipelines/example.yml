@@ -1,0 +1,31 @@
+# Example: run oss-pulse on every pull request and weekly in Azure DevOps.
+# Requires a GitHub service connection (here named "github") to fetch the template.
+
+trigger:
+  branches: { include: [main] }
+pr:
+  branches: { include: ['*'] }
+schedules:
+  - cron: "17 6 * * 1"
+    displayName: weekly, because new advisories appear without code changes
+    branches: { include: [main] }
+    always: true
+
+resources:
+  repositories:
+    - repository: osspulse
+      type: github
+      name: zahmed333/oss-pulse
+      endpoint: github
+      ref: refs/heads/main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+  - template: ci/azure-pipelines/oss-pulse.yml@osspulse
+    parameters:
+      dependencyFile: requirements.txt
+      failOn: high
+      internalPackages: [contoso-billing, contoso-auth]

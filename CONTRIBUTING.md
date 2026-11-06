@@ -24,6 +24,8 @@ make lint
 | `src/oss_pulse/supplychain/code_scan.py` | File-content checks. Each rule is one small function in `TEXT_CHECKS`; adding a rule means adding one function. |
 | `src/oss_pulse/supplychain/` | Detectors. Each takes data in and returns `Finding`s; none of them fetch, store or print. |
 | `src/oss_pulse/ingest/` | Source clients and bronze writers, one module per source. |
+| `src/oss_pulse/ci/` | CI outputs: provider detection and log annotations, JUnit, SARIF, the Azure DevOps pull-request comment. |
+| `ci/` | Pipeline templates for Azure DevOps and GitLab. |
 | `src/oss_pulse/safe_text.py` | Every string from scanned code goes through here before it is printed. |
 | `transform/` | dbt project: the SQL rules and the risk marts. |
 

@@ -15,7 +15,7 @@ Nothing is executed. Every finding points to the file, the line and the bytes th
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
-[Quick start](#quick-start) · [What it checks](#what-it-checks) · [GitHub Action](#in-ci) · [How it works](#how-it-works) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
+[Quick start](#quick-start) · [What it checks](#what-it-checks) · [CI/CD](#in-ci) · [How it works](#how-it-works) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
 <img src="docs/brand/scan-example.svg" alt="oss-pulse scan output for a fake take-home assignment: an auto-run VS Code task, JavaScript hidden in a font file, a typosquatted dependency and an npm install hook" width="860">
 
@@ -79,16 +79,43 @@ If GitHub, OSV or Scorecard can't be reached, the report says which source was m
 
 ## In CI
 
+oss-pulse works in any CI system. It exits non-zero at the level you choose, and writes JUnit (test results), SARIF (code scanning) and native log annotations, so findings show up where each system already shows problems.
+
+| CI system | How |
+|---|---|
+| Azure DevOps | Step template [`ci/azure-pipelines/oss-pulse.yml`](ci/azure-pipelines/oss-pulse.yml): Tests tab, build summary, file/line errors, SARIF artifact, one pull-request comment |
+| GitHub Actions | The `zahmed333/oss-pulse` Action: PR comment, job summary, file/line annotations |
+| GitLab CI | Include [`ci/gitlab/oss-pulse.gitlab-ci.yml`](ci/gitlab/oss-pulse.gitlab-ci.yml): merge request test report |
+| Jenkins and others | `oss-pulse scan . --junit results.xml` and your JUnit publisher |
+
+Azure DevOps:
+
+```yaml
+resources:
+  repositories:
+    - repository: osspulse
+      type: github
+      name: zahmed333/oss-pulse
+      endpoint: github
+steps:
+  - template: ci/azure-pipelines/oss-pulse.yml@osspulse
+    parameters:
+      dependencyFile: requirements.txt
+      failOn: high
+      internalPackages: [contoso-billing]
+```
+
+GitHub Actions:
+
 ```yaml
 - uses: actions/checkout@v4
 - uses: zahmed333/oss-pulse@<commit-sha>   # pin to a commit, not a tag
   with:
     dependency-file: requirements.txt
     fail-on: high
-    internal-packages: acme-auth, acme-utils
 ```
 
-The Action fails the job at the level you choose and keeps one PR comment up to date. This repository runs it on itself: [supply-chain.yml](.github/workflows/supply-chain.yml). Details in [docs/github-action.md](docs/github-action.md).
+Setup, parameters, permissions and private feeds for each system are in [docs/ci.md](docs/ci.md).
 
 ## FAQ
 
@@ -112,9 +139,9 @@ Run `oss-pulse check requirements.txt` (or `pyproject.toml`). For each dependenc
 
 Those look up known vulnerabilities in a database. oss-pulse also reads the code and release files themselves, so it can flag a malicious release on the day it is published, before anyone has filed an advisory, and it can vet a whole folder before you open it. Use it alongside a vulnerability scanner, not instead of one.
 
-### How do I block malicious dependencies in GitHub Actions?
+### How do I block malicious dependencies in Azure DevOps, GitHub Actions or GitLab?
 
-Add the oss-pulse Action to your workflow (see [In CI](#in-ci)) with `fail-on: high`. Pull requests that add a high-risk dependency fail, and the Action posts one PR comment explaining why.
+Add oss-pulse to the pipeline (see [In CI](#in-ci)) with a fail level such as `high`. Pull requests that add a high-risk dependency fail; findings appear in the Tests tab or test report, as file and line errors, and in one pull-request comment.
 
 ### Does it run or upload my code?
 

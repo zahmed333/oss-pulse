@@ -1,0 +1,116 @@
+# Azure Pipelines step template for oss-pulse.
+#
+# Results show up in the build's Tests tab (JUnit), the Extensions/summary tab (Markdown),
+# as file/line errors in the log, in the Scans tab when the SARIF SAST Scans Tab extension
+# is installed (CodeAnalysisLogs artifact), and as one pull-request comment.
+#
+# See docs/ci.md for how to reference this template from your own pipeline.
+
+parameters:
+  - name: dependencyFile
+    type: string
+    default: requirements.txt
+  - name: scanPath
+    type: string
+    default: $(Build.SourcesDirectory)
+  - name: failOn
+    type: string
+    default: high
+    values: [critical, high, medium, never]
+  - name: internalPackages
+    type: object
+    default: []
+  - name: ignoreFile
+    type: string
+    default: ''
+  - name: pythonVersion
+    type: string
+    default: '3.12'
+  - name: ossPulseRef
+    type: string
+    default: main
+  - name: commentOnPullRequest
+    type: boolean
+    default: true
+
+steps:
+  - task: UsePythonVersion@0
+    displayName: oss-pulse - use Python ${{ parameters.pythonVersion }}
+    inputs:
+      versionSpec: ${{ parameters.pythonVersion }}
+
+  - bash: python -m pip install --quiet "git+https://github.com/zahmed333/oss-pulse@${OSS_PULSE_REF}"
+    displayName: oss-pulse - install
+    env:
+      OSS_PULSE_REF: ${{ parameters.ossPulseRef }}
+
+  - bash: |
+      out="$(Agent.TempDirectory)/oss-pulse"
+      mkdir -p "$out"
+      status=0
+
+      if [ -n "$SCAN_PATH" ]; then
+        scan_args=()
+        if [ -n "$IGNORE_FILE" ]; then scan_args+=(--ignore-file "$IGNORE_FILE"); fi
+        oss-pulse scan "$SCAN_PATH" --fail-on "$FAIL_ON" "${scan_args[@]}" \
+          --markdown "$out/scan.md" --junit "$out/scan.junit.xml" --sarif "$out/scan.sarif"
+        rc=$?; [ "$rc" -gt "$status" ] && status=$rc
+      fi
+
+      if [ -n "$DEP_FILE" ] && [ -f "$DEP_FILE" ]; then
+        check_args=()
+        IFS=',' read -ra names <<< "$INTERNAL"
+        for name in "${names[@]}"; do
+          name="${name// /}"
+          if [ -n "$name" ]; then check_args+=(--internal "$name"); fi
+        done
+        oss-pulse check "$DEP_FILE" --fail-on "$FAIL_ON" "${check_args[@]}" \
+          --data-dir "$out/lake" --markdown "$out/check.md" \
+          --junit "$out/check.junit.xml" --sarif "$out/check.sarif"
+        rc=$?; [ "$rc" -gt "$status" ] && status=$rc
+      fi
+
+      cat "$out"/check.md "$out"/scan.md 2>/dev/null > "$out/report.md"
+      echo "##vso[task.setvariable variable=OSS_PULSE_STATUS]$status"
+      if [ "$status" -eq 1 ]; then
+        echo "##vso[task.logissue type=error]oss-pulse found supply-chain risk at or above '$FAIL_ON'."
+      elif [ "$status" -gt 1 ]; then
+        echo "##vso[task.logissue type=error]oss-pulse could not finish (exit $status); this is a tool failure, not a finding."
+      fi
+      exit 0
+    displayName: oss-pulse - scan and check
+    env:
+      SCAN_PATH: ${{ parameters.scanPath }}
+      DEP_FILE: ${{ parameters.dependencyFile }}
+      FAIL_ON: ${{ parameters.failOn }}
+      INTERNAL: ${{ join(',', parameters.internalPackages) }}
+      IGNORE_FILE: ${{ parameters.ignoreFile }}
+
+  - task: PublishTestResults@2
+    displayName: oss-pulse - publish results to the Tests tab
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: $(Agent.TempDirectory)/oss-pulse/*.junit.xml
+      testRunTitle: oss-pulse
+      failTaskOnFailedTests: false
+
+  - task: PublishBuildArtifacts@1
+    displayName: oss-pulse - publish SARIF (CodeAnalysisLogs)
+    condition: succeededOrFailed()
+    inputs:
+      PathtoPublish: $(Agent.TempDirectory)/oss-pulse
+      ArtifactName: CodeAnalysisLogs
+
+  - ${{ if eq(parameters.commentOnPullRequest, true) }}:
+    - bash: oss-pulse pr-comment "$(Agent.TempDirectory)/oss-pulse/report.md"
+      displayName: oss-pulse - comment on the pull request
+      condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'PullRequest'))
+      continueOnError: true
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+  - bash: exit "$OSS_PULSE_STATUS"
+    displayName: oss-pulse - gate
+    env:
+      OSS_PULSE_STATUS: $(OSS_PULSE_STATUS)
