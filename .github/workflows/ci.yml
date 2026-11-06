@@ -56,6 +56,11 @@ jobs:
           if "$RUNNER_TEMP/venv/bin/oss-pulse" scan "$trap_dir" --fail-on high; then
             echo "the auto-run task was not blocked"; exit 1
           fi
+      - name: JUnit and SARIF outputs are valid
+        run: |
+          "$RUNNER_TEMP/venv/bin/oss-pulse" scan . --ignore-file .osspulseignore --annotations none \
+            --junit "$RUNNER_TEMP/scan.xml" --sarif "$RUNNER_TEMP/scan.sarif"
+          python -c "import sys, json, xml.etree.ElementTree as E; E.parse(sys.argv[1]); assert json.load(open(sys.argv[2]))['version'] == '2.1.0'" "$RUNNER_TEMP/scan.xml" "$RUNNER_TEMP/scan.sarif"
       - name: check runs the dbt project bundled in the wheel
         run: |
           "$RUNNER_TEMP/venv/bin/oss-pulse" check pyproject.toml --data-dir "$RUNNER_TEMP/lake" --no-scan-artifacts

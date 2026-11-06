@@ -1,0 +1,32 @@
+# GitLab CI template for oss-pulse. Include it from your .gitlab-ci.yml:
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/zahmed333/oss-pulse/main/ci/gitlab/oss-pulse.gitlab-ci.yml
+#   variables:
+#     OSS_PULSE_DEPENDENCY_FILE: requirements.txt
+#
+# Findings appear in the merge request's test report widget (JUnit) and as job artifacts.
+
+variables:
+  OSS_PULSE_DEPENDENCY_FILE: requirements.txt
+  OSS_PULSE_SCAN_PATH: .
+  OSS_PULSE_FAIL_ON: high
+  OSS_PULSE_REF: main
+
+oss-pulse:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git > /dev/null
+    - pip install --quiet "git+https://github.com/zahmed333/oss-pulse@${OSS_PULSE_REF}"
+  script:
+    - mkdir -p oss-pulse-out
+    - status=0
+    - oss-pulse scan "$OSS_PULSE_SCAN_PATH" --fail-on "$OSS_PULSE_FAIL_ON" --markdown oss-pulse-out/scan.md --junit oss-pulse-out/scan.junit.xml --sarif oss-pulse-out/scan.sarif || status=$?
+    - if [ -f "$OSS_PULSE_DEPENDENCY_FILE" ]; then oss-pulse check "$OSS_PULSE_DEPENDENCY_FILE" --fail-on "$OSS_PULSE_FAIL_ON" --data-dir oss-pulse-out/lake --markdown oss-pulse-out/check.md --junit oss-pulse-out/check.junit.xml --sarif oss-pulse-out/check.sarif || { rc=$?; [ "$rc" -gt "$status" ] && status=$rc; }; fi
+    - exit "$status"
+  artifacts:
+    when: always
+    paths: [oss-pulse-out/*.md, oss-pulse-out/*.sarif, oss-pulse-out/*.xml]
+    reports:
+      junit: oss-pulse-out/*.junit.xml

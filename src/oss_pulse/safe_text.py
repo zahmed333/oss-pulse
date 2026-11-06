@@ -7,7 +7,8 @@ through one of these helpers before it reaches a terminal, a PR comment or a CI 
 - `visible()` turns control characters, bidirectional overrides and zero-width characters
   into visible escapes such as `\\x1b` and `\\u202e`. A scanned file can't send escape
   sequences to your terminal, can't start a new line in a CI log (where `::error::` and
-  friends are workflow commands), and Trojan Source tricks show up instead of hiding.
+  friends are workflow commands), can't issue an Azure Pipelines `##vso[...]` command
+  from the middle of a line, and Trojan Source tricks show up instead of hiding.
 - `md_code()` wraps text in a Markdown code span it can't break out of.
 - `md_text()` escapes Markdown and HTML in prose and defuses @mentions, so a file name
   can't add a link, an image, raw HTML or a ping to a PR comment.
@@ -26,6 +27,7 @@ _CATEGORIES = {"Cc", "Cf", "Zl", "Zp", "Cs"}
 _MD_SPECIAL = re.compile(r"([\\`*_{}\[\]<>()#+!|~^])")
 _MENTION = re.compile(r"@(?=[A-Za-z0-9_-])")
 _BACKTICKS = re.compile(r"`+")
+_AZURE_PIPELINES_COMMAND = re.compile(r"##(?=vso\[|\[)", re.IGNORECASE)
 
 
 def _escape(ch: str) -> str:
@@ -44,6 +46,7 @@ def _escape(ch: str) -> str:
 def visible(text: object, limit: int | None = None) -> str:
     """One line of text with every invisible or control character shown as an escape."""
     out = "".join(_escape(ch) for ch in str(text))
+    out = _AZURE_PIPELINES_COMMAND.sub(r"\\x23#", out)
     if limit is not None and len(out) > limit:
         out = out[: max(limit - 1, 0)] + "…"
     return out

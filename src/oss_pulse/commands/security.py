@@ -6,7 +6,19 @@ from pathlib import Path
 
 import typer
 
+from oss_pulse.ci.outputs import CiOutputs
+
 FAIL_ON_LEVELS = ("critical", "high", "medium", "never")
+ANNOTATION_MODES = ("auto", "azure", "github", "gitlab", "jenkins", "generic", "none")
+
+JUNIT_OPTION = typer.Option(None, "--junit", help="Also write JUnit XML (test results in any CI)")
+SARIF_OPTION = typer.Option(None, "--sarif", help="Also write SARIF 2.1.0 (code scanning)")
+ANNOTATIONS_OPTION = typer.Option(
+    "auto",
+    "--annotations",
+    help="Log annotations for the CI system: auto (detected), azure, github, gitlab, "
+    "jenkins, generic or none",
+)
 
 security = typer.Typer()
 
@@ -32,11 +44,16 @@ def check(
     json_out: Path = typer.Option(None, "--json", help="Also write the JSON report here"),
     include_optional: bool = typer.Option(True, help="Include extras and dependency groups"),
     data_dir: Path = typer.Option(Path(".oss-pulse"), help="Local lakehouse for this check"),
+    junit: Path = JUNIT_OPTION,
+    sarif: Path = SARIF_OPTION,
+    annotations: str = ANNOTATIONS_OPTION,
 ) -> None:
     """Assess supply-chain risk of your project's dependencies."""
     from oss_pulse.check import SEVERITY, render_json, render_markdown, run_check
+    from oss_pulse.ci.finding import from_check
 
     _validate_fail_on(fail_on)
+    _validate_annotations(annotations)
     result = run_check(
         dependency_file,
         data_dir.resolve(),
@@ -51,6 +68,13 @@ def check(
         markdown.write_text(md)
     if json_out:
         json_out.write_text(render_json(result))
+    _write_ci_outputs(
+        from_check(result.findings, dependency_file),
+        CiOutputs(junit, sarif, annotations),
+        suite=f"oss-pulse check {dependency_file.name}",
+        fail_on=fail_on,
+        markdown=markdown,
+    )
     if strict and result.degraded:
         typer.echo("failing (--strict): some signals could not be collected", err=True)
         raise typer.Exit(code=2)
@@ -77,6 +101,9 @@ def scan(
     ),
     markdown: Path = typer.Option(None, help="Also write the Markdown report here"),
     json_out: Path = typer.Option(None, "--json", help="Also write the JSON report here"),
+    junit: Path = JUNIT_OPTION,
+    sarif: Path = SARIF_OPTION,
+    annotations: str = ANNOTATIONS_OPTION,
 ) -> None:
     """Read an untrusted repository before you open or install it.
 
@@ -84,10 +111,12 @@ def scan(
     obfuscated or hidden payloads, credential/wallet stealers, exfiltration endpoints,
     typosquatted dependencies and unsafe GitHub Actions workflows.
     """
+    from oss_pulse.ci.finding import from_scan
     from oss_pulse.scan import render_scan_json, render_scan_markdown, run_scan
     from oss_pulse.supplychain.findings import SEVERITY_RANK
 
     _validate_fail_on(fail_on)
+    _validate_annotations(annotations)
     result = run_scan(path, ignore_file=ignore_file)
     md = render_scan_markdown(result)
     typer.echo(md)
@@ -95,6 +124,13 @@ def scan(
         markdown.write_text(md)
     if json_out:
         json_out.write_text(render_scan_json(result))
+    _write_ci_outputs(
+        from_scan(result.findings, result.root),
+        CiOutputs(junit, sarif, annotations),
+        suite=f"oss-pulse scan {result.root.name}",
+        fail_on=fail_on,
+        markdown=markdown,
+    )
     if fail_on != "never" and any(
         SEVERITY_RANK[f.severity] >= SEVERITY_RANK[fail_on] for f in result.findings
     ):
@@ -113,6 +149,41 @@ def rules() -> None:
         if r.seen_in:
             typer.echo(f"{'':<20} seen in: {r.seen_in}")
         typer.echo("")
+
+
+@security.command("pr-comment")
+def pr_comment(
+    report: Path = typer.Argument(..., exists=True, dir_okay=False, help="Markdown report"),
+) -> None:
+    """Post or update the oss-pulse comment on the current Azure DevOps pull request.
+
+    Run it in a pull-request build with SYSTEM_ACCESSTOKEN mapped into the step's
+    environment. On GitHub, the oss-pulse Action posts the comment itself.
+    """
+    import os
+
+    import httpx
+
+    from oss_pulse.ci.pull_request import AzurePullRequest, NotAPullRequestBuild, upsert_comment
+
+    try:
+        pr = AzurePullRequest.from_env(os.environ)
+    except NotAPullRequestBuild as exc:
+        typer.echo(f"not an Azure DevOps pull-request build ({exc}); no comment posted", err=True)
+        return
+    with httpx.Client(timeout=30.0) as client:
+        outcome = upsert_comment(pr, report.read_text(), client)
+    typer.echo(f"pull request comment {outcome}", err=True)
+
+
+def _write_ci_outputs(findings, outputs, *, suite: str, fail_on: str, markdown) -> None:
+    for line in outputs.write(findings, suite=suite, fail_on=fail_on, markdown=markdown):
+        typer.echo(line)
+
+
+def _validate_annotations(value: str) -> None:
+    if value not in ANNOTATION_MODES:
+        raise typer.BadParameter(f"--annotations must be one of: {', '.join(ANNOTATION_MODES)}")
 
 
 def _validate_fail_on(value: str) -> None:
