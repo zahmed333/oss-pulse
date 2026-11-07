@@ -17,6 +17,11 @@ inputs:
   fail-on:
     description: Fail the job at this risk level or above (critical | high | medium | never)
     default: high
+  skip:
+    description: >
+      Comma-separated sources not to contact (github, osv, scorecard, integrity, files),
+      for runners that can't reach them. Skipped sources are reported as not checked.
+    default: ""
   ignore-file:
     description: >
       Your own list of reviewed paths or rule ids to suppress in the repository scan, for
@@ -65,6 +70,7 @@ runs:
         DEP_FILE: ${{ inputs.dependency-file }}
         SCAN_PATH: ${{ inputs.scan-path }}
         FAIL_ON: ${{ inputs.fail-on }}
+        OSS_PULSE_SKIP: ${{ inputs.skip }}
         IGNORE_FILE: ${{ inputs.ignore-file }}
         INTERNAL: ${{ inputs.internal-packages }}
         DAYS: ${{ inputs.days }}

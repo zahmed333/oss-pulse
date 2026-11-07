@@ -50,12 +50,49 @@ If your organization does not allow GitHub service connections, copy the templat
 | `internalPackages` | `[]` | Your private package names, checked for dependency confusion |
 | `ignoreFile` | `''` | Your reviewed suppressions, for example `.osspulseignore` |
 | `pythonVersion` | `3.12` | Python used to run oss-pulse |
-| `ossPulseRef` | `main` | Git ref of oss-pulse to install; pin a commit SHA |
+| `ossPulseRef` | `v0.1.0` | Git ref of oss-pulse to install; see [Pinning](#pinning) |
+| `skip` | `''` | Sources not to contact, for example `osv,scorecard`; see [Locked-down networks](#locked-down-networks) |
+| `runDoctor` | `true` | Log which services the agent can reach before the check |
 | `commentOnPullRequest` | `true` | Keep one oss-pulse comment on the pull request |
 
 The pull-request comment uses the pipeline's `System.AccessToken`. Give the project's build service "Contribute to pull requests" on the repository (Project settings, Repositories, Security). Without it the comment step logs a warning and the build continues.
 
-Private feeds: `check` looks names up on public PyPI. Pass your internal package names in `internalPackages` so oss-pulse reports them only if the same name exists publicly (dependency confusion) and never sends their contents anywhere. Self-hosted agents need outbound HTTPS to pypi.org, files.pythonhosted.org, api.github.com, api.osv.dev and api.securityscorecards.dev; anything unreachable is reported as "not checked".
+Private feeds: `check` looks names up on public PyPI. Pass your internal package names in `internalPackages` so oss-pulse reports them only if the same name exists publicly (dependency confusion) and never sends their contents anywhere.
+
+## Locked-down networks
+
+`scan` never uses the network. `check` needs PyPI and, for full coverage, a few other services. Run `oss-pulse doctor` on the agent first: it tries each one and says what is lost without it.
+
+```text
+$ oss-pulse doctor
+  ok           pypi       package metadata and release files
+  ok           github     repository activity, archived flag and tags
+  unreachable  osv        advisories are not checked
+  ...
+To avoid waiting on timeouts, skip what this machine can't reach:
+  oss-pulse check requirements.txt --skip osv,scorecard
+```
+
+| Service | Default | Needed for | Override |
+|---|---|---|---|
+| PyPI JSON API | `https://pypi.org/pypi` | everything in `check` | `OSS_PULSE_PYPI_URL` |
+| PyPI attestations | `https://pypi.org/integrity` | provenance rules | `OSS_PULSE_PYPI_INTEGRITY_URL` |
+| PyPI files | `https://files.pythonhosted.org` | release-file malware scan | file links come from the PyPI metadata, so a mirror serves its own |
+| GitHub API | `https://api.github.com` | maintenance signals, git-tag rule | `OSS_PULSE_GITHUB_API_URL` (GitHub Enterprise Server: `https://<host>/api/v3`) |
+| OSV.dev | `https://api.osv.dev` | known vulnerabilities and malicious packages | `OSS_PULSE_OSV_URL` |
+| OpenSSF Scorecard | `https://api.securityscorecards.dev` | Scorecard results | `OSS_PULSE_SCORECARD_URL` |
+| Popular-package list | raw.githubusercontent.com | a fresh lookalike list | `OSS_PULSE_POPULAR_LIST_URL`; without it the bundled list is used |
+
+What to do when a service is blocked:
+
+- Ask for it to be allowed. The table above is the complete list; nothing else is contacted.
+- Point oss-pulse at an approved mirror or proxy with the override variables. A PyPI mirror such as an Azure Artifacts upstream or Artifactory that serves the PyPI JSON API works for `OSS_PULSE_PYPI_URL`.
+- Use a corporate proxy as it is: oss-pulse honours `HTTPS_PROXY`, `NO_PROXY` and `SSL_CERT_FILE`.
+- Skip what stays blocked: `--skip osv,scorecard` (or `OSS_PULSE_SKIP`, or the `skip` template parameter). Skipped sources are listed as "not checked" in the report, and the check finishes without waiting on timeouts. Add `--strict` if a missing source should fail the build.
+
+## Pinning
+
+The templates install a fixed release, `v0.1.0`, so a pipeline does not change because oss-pulse's `main` changed. For the strongest guarantee, pin both the template and the install to a commit SHA you have reviewed: set `ref:` in the Azure DevOps `resources` block (or the `@<sha>` in a GitHub `uses:`) and `ossPulseRef` to the same SHA. A tag can be moved by whoever controls the repository; a SHA cannot.
 
 ## GitHub Actions
 

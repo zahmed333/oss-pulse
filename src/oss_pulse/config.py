@@ -9,6 +9,8 @@ from pathlib import Path
 
 import yaml
 
+from oss_pulse import endpoints
+
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = PACKAGE_DIR.parents[1]
 
@@ -33,9 +35,7 @@ class Settings:
     gharchive_base_url: str = field(
         default_factory=lambda: os.getenv("OSS_PULSE_GHARCHIVE_URL", "https://data.gharchive.org")
     )
-    pypi_base_url: str = field(
-        default_factory=lambda: os.getenv("OSS_PULSE_PYPI_URL", "https://pypi.org/pypi")
-    )
+    pypi_base_url: str = field(default_factory=lambda: endpoints.url("pypi"))
     projects_file: Path = field(
         default_factory=lambda: Path(
             os.getenv(

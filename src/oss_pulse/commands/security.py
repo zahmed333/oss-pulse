@@ -47,6 +47,12 @@ def check(
     junit: Path = JUNIT_OPTION,
     sarif: Path = SARIF_OPTION,
     annotations: str = ANNOTATIONS_OPTION,
+    skip: str = typer.Option(
+        "",
+        "--skip",
+        help="Comma-separated sources not to contact: github, osv, scorecard, integrity, "
+        "files. Skipped sources are reported as not checked. Run 'oss-pulse doctor' first.",
+    ),
 ) -> None:
     """Assess supply-chain risk of your project's dependencies."""
     from oss_pulse.check import SEVERITY, render_json, render_markdown, run_check
@@ -54,6 +60,7 @@ def check(
 
     _validate_fail_on(fail_on)
     _validate_annotations(annotations)
+    skipped = _parse_skip(skip)
     result = run_check(
         dependency_file,
         data_dir.resolve(),
@@ -61,6 +68,7 @@ def check(
         include_optional=include_optional,
         internal=internal,
         scan_artifacts=scan_artifacts,
+        skip=skipped,
     )
     md = render_markdown(result)
     typer.echo(md)
@@ -151,6 +159,18 @@ def rules() -> None:
         typer.echo("")
 
 
+@security.command("doctor")
+def doctor() -> None:
+    """Check which services this machine can reach before running check in CI."""
+    from oss_pulse.doctor import pypi_reachable, render, run_doctor
+
+    probes = run_doctor()
+    typer.echo(render(probes))
+    if not pypi_reachable(probes):
+        typer.echo("error: PyPI is unreachable, so check cannot run here", err=True)
+        raise typer.Exit(code=2)
+
+
 @security.command("pr-comment")
 def pr_comment(
     report: Path = typer.Argument(..., exists=True, dir_okay=False, help="Markdown report"),
@@ -179,6 +199,18 @@ def pr_comment(
 def _write_ci_outputs(findings, outputs, *, suite: str, fail_on: str, markdown) -> None:
     for line in outputs.write(findings, suite=suite, fail_on=fail_on, markdown=markdown):
         typer.echo(line)
+
+
+def _parse_skip(value: str) -> set[str]:
+    from oss_pulse.endpoints import SKIPPABLE
+
+    wanted = {part.strip() for part in value.split(",") if part.strip()}
+    unknown = wanted - set(SKIPPABLE)
+    if unknown:
+        raise typer.BadParameter(
+            f"--skip takes {', '.join(SKIPPABLE)}; got {', '.join(sorted(unknown))}"
+        )
+    return wanted
 
 
 def _validate_annotations(value: str) -> None:

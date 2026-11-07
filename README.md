@@ -33,11 +33,12 @@ oss-pulse is built for two attacks that antivirus and vulnerability scanners don
 ## Quick start
 
 ```sh
-pip install git+https://github.com/zahmed333/oss-pulse   # not on PyPI yet
+pip install git+https://github.com/zahmed333/oss-pulse@v0.1.0   # not on PyPI yet
 
 oss-pulse scan ~/take-home --fail-on high   # a folder someone sent you
 oss-pulse check requirements.txt            # the packages you are about to install
 oss-pulse rules                             # every rule, and the attack it comes from
+oss-pulse doctor                            # which services this machine can reach
 ```
 
 `scan` exits 1 when it finds something at or above `--fail-on`, so `oss-pulse scan ~/take-home --fail-on high && code ~/take-home` only opens a folder that passed. The example above is an inert fixture from the test suite; nothing in it is real malware.

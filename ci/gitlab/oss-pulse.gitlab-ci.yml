@@ -11,7 +11,8 @@ variables:
   OSS_PULSE_DEPENDENCY_FILE: requirements.txt
   OSS_PULSE_SCAN_PATH: .
   OSS_PULSE_FAIL_ON: high
-  OSS_PULSE_REF: main
+  OSS_PULSE_REF: v0.1.0
+  OSS_PULSE_SKIP: ""
 
 oss-pulse:
   stage: test
@@ -20,6 +21,7 @@ oss-pulse:
     - apt-get update -qq && apt-get install -y -qq git > /dev/null
     - pip install --quiet "git+https://github.com/zahmed333/oss-pulse@${OSS_PULSE_REF}"
   script:
+    - oss-pulse doctor || true
     - mkdir -p oss-pulse-out
     - status=0
     - oss-pulse scan "$OSS_PULSE_SCAN_PATH" --fail-on "$OSS_PULSE_FAIL_ON" --markdown oss-pulse-out/scan.md --junit oss-pulse-out/scan.junit.xml --sarif oss-pulse-out/scan.sarif || status=$?

@@ -15,12 +15,13 @@ from dataclasses import dataclass
 
 import httpx
 
+from oss_pulse.endpoints import url
 from oss_pulse.supplychain.findings import Finding
 from oss_pulse.supplychain.rules import rule
 
 log = logging.getLogger(__name__)
 
-INTEGRITY = "https://pypi.org/integrity"
+INTEGRITY = url("integrity")
 
 
 @dataclass(frozen=True)

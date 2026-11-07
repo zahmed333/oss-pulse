@@ -13,6 +13,7 @@ import httpx
 import pyarrow as pa
 from packaging.utils import canonicalize_name
 
+from oss_pulse import endpoints
 from oss_pulse.check.result import LEVELS, CheckResult
 from oss_pulse.check.versions import (
     NO_FACTS,
@@ -40,6 +41,7 @@ class CheckRun:
     window_days: int
     client: httpx.Client
     gh: github_api.GitHubClient | None
+    skip: set[str] = field(default_factory=set)
     today: date = field(default_factory=lambda: datetime.now(UTC).date())
     pypi_docs: dict[str, dict | None] = field(default_factory=dict)
     linked_repo: dict[str, tuple[str | None, str]] = field(default_factory=dict)
@@ -54,6 +56,12 @@ class CheckRun:
     @property
     def public_names(self) -> list[str]:
         return [d.name for d in self.dependencies if d.name not in self.internal_names]
+
+    def is_wanted(self, source: str, what: str) -> bool:
+        if source in self.skip:
+            self.unavailable_signals.append(f"{what}: skipped (--skip {source})")
+            return False
+        return True
 
     def public_releases(self):
         """(dependency, PyPI document, resolved version) for every public, resolvable dependency."""
@@ -73,6 +81,7 @@ def run_check(
     scan_artifacts: bool = True,
     gh: github_api.GitHubClient | None = None,
     http: httpx.Client | None = None,
+    skip: set[str] | None = None,
 ) -> CheckResult:
     dependencies = parse_dependency_file(dependency_file, include_optional=include_optional)
     if not dependencies:
@@ -87,13 +96,14 @@ def run_check(
         window_days=days,
         client=client,
         gh=gh,
+        skip=set(skip or ()) | endpoints.skipped_from_env(),
     )
     try:
         fetch_pypi_metadata(run)
         detect_lookalike_names(run)
         fetch_github_activity(run)
         detect_provenance_changes(run)
-        if scan_artifacts:
+        if scan_artifacts and run.is_wanted("files", "release-file malware scan"):
             scan_release_files(run)
         store_in_bronze(run)
     finally:
@@ -126,6 +136,8 @@ def detect_lookalike_names(run: CheckRun) -> None:
 
 
 def fetch_github_activity(run: CheckRun) -> None:
+    if not run.is_wanted("github", "GitHub activity (maintenance signals)"):
+        return
     repos = sorted({repo for repo, _ in run.linked_repo.values() if repo})
     try:
         run.canonical_repo = github_api.ingest_repos(
@@ -148,6 +160,8 @@ def fetch_github_activity(run: CheckRun) -> None:
 
 
 def detect_provenance_changes(run: CheckRun) -> None:
+    if not run.is_wanted("integrity", "Trusted Publishing attestations (provenance)"):
+        return
     for dep, doc, version in run.public_releases():
         releases = doc.get("releases") or {}
         previous = previous_stable_release(doc, version)
@@ -188,15 +202,21 @@ def store_in_bronze(run: CheckRun) -> None:
     )
     pypi.write_reference(run.settings, _tracked_projects(run))
     pypi.ingest_pypi(run.settings, snapshot=run.today, packages=run.public_names, client=run.client)
+    if run.is_wanted("osv", "OSV.dev (vulnerabilities, known-malicious packages)"):
+        _ingest_advisories(run)
+    if run.is_wanted("scorecard", "OpenSSF Scorecard"):
+        scorecard.ingest_scorecard(
+            run.settings, sorted(set(run.canonical_repo.values())), day=run.today, client=run.client
+        )
+
+
+def _ingest_advisories(run: CheckRun) -> None:
     try:
         osv.ingest_osv(run.settings, run.public_names, day=run.today, client=run.client)
     except httpx.HTTPError as exc:
         run.unavailable_signals.append(
             f"OSV.dev (vulnerabilities, known-malicious packages): {exc}"
         )
-    scorecard.ingest_scorecard(
-        run.settings, sorted(set(run.canonical_repo.values())), day=run.today, client=run.client
-    )
 
 
 def _dependency_row(run: CheckRun, dep: DeclaredDependency) -> dict:

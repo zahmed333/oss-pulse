@@ -24,6 +24,8 @@ def main(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s %(levelname)-7s %(name)s | %(message)s",
     )
+    if not verbose:
+        logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 if __name__ == "__main__":

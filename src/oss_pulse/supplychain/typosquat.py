@@ -16,14 +16,13 @@ from pathlib import Path
 import httpx
 from packaging.utils import canonicalize_name
 
+from oss_pulse.endpoints import url
 from oss_pulse.supplychain.findings import Finding
 from oss_pulse.supplychain.rules import rule
 
 log = logging.getLogger(__name__)
 
-TOP_URL = (
-    "https://raw.githubusercontent.com/hugovk/top-pypi-packages/main/top-pypi-packages.min.json"
-)
+TOP_URL = url("popular")
 BUNDLED = Path(__file__).with_name("data") / "top_pypi_packages.txt"
 MOST_POPULAR_NAMES_TO_PROTECT = 5000
 TOO_SHORT_TO_COMPARE = 4

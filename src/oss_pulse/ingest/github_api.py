@@ -33,13 +33,14 @@ from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 
 from oss_pulse.config import Settings
+from oss_pulse.endpoints import url
 from oss_pulse.ingest.gharchive import InvalidEvent, normalize_event
 from oss_pulse.ingest.io import atomic_write_json, atomic_write_table
 from oss_pulse.ingest.schema import GHARCHIVE_EVENTS, GITHUB_REPOS
 
 log = logging.getLogger(__name__)
 
-API = "https://api.github.com"
+API = url("github")
 DEFAULT_MAX_PAGES = 5  # per endpoint per repo: bounds cost on very busy repos
 
 

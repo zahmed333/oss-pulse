@@ -17,12 +17,13 @@ import httpx
 import pyarrow as pa
 
 from oss_pulse.config import Settings
+from oss_pulse.endpoints import url
 from oss_pulse.ingest.io import atomic_write_json, atomic_write_table
 from oss_pulse.ingest.schema import SCORECARD_CHECKS
 
 log = logging.getLogger(__name__)
 
-SCORECARD_API = "https://api.securityscorecards.dev"
+SCORECARD_API = url("scorecard")
 
 
 def scorecard_to_rows(repo: str, doc: dict, ingested_at: datetime) -> list[dict]:

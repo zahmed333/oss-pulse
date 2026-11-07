@@ -28,7 +28,13 @@ parameters:
     default: '3.12'
   - name: ossPulseRef
     type: string
-    default: main
+    default: v0.1.0
+  - name: skip
+    type: string
+    default: ''
+  - name: runDoctor
+    type: boolean
+    default: true
   - name: commentOnPullRequest
     type: boolean
     default: true
@@ -43,6 +49,11 @@ steps:
     displayName: oss-pulse - install
     env:
       OSS_PULSE_REF: ${{ parameters.ossPulseRef }}
+
+  - ${{ if eq(parameters.runDoctor, true) }}:
+    - bash: oss-pulse doctor
+      displayName: oss-pulse - check network access
+      continueOnError: true
 
   - bash: |
       out="$(Agent.TempDirectory)/oss-pulse"
@@ -64,6 +75,7 @@ steps:
           name="${name// /}"
           if [ -n "$name" ]; then check_args+=(--internal "$name"); fi
         done
+        if [ -n "$SKIP" ]; then check_args+=(--skip "$SKIP"); fi
         oss-pulse check "$DEP_FILE" --fail-on "$FAIL_ON" "${check_args[@]}" \
           --data-dir "$out/lake" --markdown "$out/check.md" \
           --junit "$out/check.junit.xml" --sarif "$out/check.sarif"
@@ -85,6 +97,7 @@ steps:
       FAIL_ON: ${{ parameters.failOn }}
       INTERNAL: ${{ join(',', parameters.internalPackages) }}
       IGNORE_FILE: ${{ parameters.ignoreFile }}
+      SKIP: ${{ parameters.skip }}
 
   - task: PublishTestResults@2
     displayName: oss-pulse - publish results to the Tests tab

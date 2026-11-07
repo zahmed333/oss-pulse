@@ -21,12 +21,13 @@ from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 from oss_pulse.config import Settings
+from oss_pulse.endpoints import url
 from oss_pulse.ingest.io import atomic_write_json, atomic_write_table
 from oss_pulse.ingest.schema import OSV_VULNERABILITIES
 
 log = logging.getLogger(__name__)
 
-OSV_API = "https://api.osv.dev"
+OSV_API = url("osv")
 
 
 def normalize_version(v: str) -> str:

@@ -34,6 +34,7 @@ The report is posted as one PR comment, updated on each push, and written to the
 | `dependency-file` | `pyproject.toml` | File to check (`''` skips the dependency check) |
 | `scan-path` | `.` | Folder to scan statically (`''` skips the repository scan) |
 | `fail-on` | `high` | `critical`, `high`, `medium` or `never` |
+| `skip` | | Sources not to contact on runners that can't reach them, for example `osv,scorecard`. Reported as not checked. |
 | `ignore-file` | | Your list of reviewed paths or rule ids to suppress in the repository scan. An `.osspulseignore` inside the scanned folder is never applied on its own, because the folder under inspection must not configure its own scan. A pull request can edit the file you pass here, so protect it with CODEOWNERS; the report always lists what was suppressed. |
 | `internal-packages` | | Private package names to guard against dependency confusion |
 | `days` | `90` | Activity window for maintenance signals |
