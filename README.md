@@ -167,7 +167,7 @@ The same storage also powers a second, separate use: tracking the health of open
 
 A missing signal is reported, never guessed. If GitHub is unreachable, the report says "GitHub not reachable" rather than "repository not found", and `--strict` turns any missing source into a CI failure.
 
-False positives are fixed like any other bug, because people stop using a tool that flags numpy. Behaviour that legitimate libraries need, such as reading `~/.aws/credentials` or compiling C extensions, only counts when stronger evidence is also present. This is not solved yet: on the 250 most-downloaded PyPI packages, 16% still get a medium or higher finding. A fix that brings that to zero has been prototyped and is first on the [roadmap](ROADMAP.md).
+False positives are fixed like any other bug, because people stop using a tool that flags numpy. On the 250 most-downloaded PyPI packages, no package gets a finding at medium or above (down from 39), while all 24 attack shapes in the test suite are still caught. Method, numbers and limits are in [docs/benchmarks.md](docs/benchmarks.md).
 
 Every result names its rule, file, line and the exact bytes that matched. There is no combined risk score.
 

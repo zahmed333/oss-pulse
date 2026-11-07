@@ -8,13 +8,14 @@ What is done, and what comes next, in the order it will be built. Each item was 
 - A scanned folder cannot silence its own findings; an `.osspulseignore` inside it is reported as EVADE-IGNORE.
 - Text quoted from scanned files cannot inject terminal escapes, CI workflow commands, or Markdown links, images, HTML or mentions into reports.
 - dbt sends no usage statistics and writes nothing into the installed package.
+- No finding at medium or above on the 250 most-downloaded PyPI packages, with 37 precision and recall cases in the test suite ([docs/benchmarks.md](docs/benchmarks.md)).
+- Runs in Azure DevOps, GitHub Actions, GitLab and Jenkins: JUnit, SARIF, native annotations and pull-request comments ([docs/ci.md](docs/ci.md)).
 - The scripted customer task suite (`scripts/cx_tasks.sh`) and the copy linter (`scripts/anti_tells.py`) are committed, with baselines.
 
 ## Correctness and safety of the scanner
 
 - Auto-run files can't crash the scan, slip past AUTO-VSCODE, or hide in a nested folder.
 - No file in a scanned folder or release can hang the scanner or exhaust its memory.
-- Port the adjudicated scanner prototype without its quadratic paths: nothing at medium or above on the top 250.
 - Lookalike names graded by edit strength and metadata, safe for established names offline; scan quotes the name and the line.
 - One verdict per finding (hold, review, watch, note), upkeep is never a threat, one default gate, brand words in the SQL.
 - Exit codes mean one thing each, nothing ends in a traceback, output can't crash on encoding, every dependency knows its line.
@@ -37,7 +38,7 @@ What is done, and what comes next, in the order it will be built. Each item was 
 
 ## Outputs other tools can use, and proof in CI
 
-- Results other tools can build on: a versioned JSON envelope, SARIF, baselines and a PR diff view.
+- Results other tools can build on: a versioned JSON envelope, baselines and a PR diff view.
 - First run without surprises: an offline demo, doctor, init, a pre-commit hook, and no data left in your project.
 - Ways to report, dispute and contribute: SECURITY, SUPPORT, PRIVACY, CONTRIBUTING, CHANGELOG, issue forms, a page for flagged maintainers.
 - Proof that stays true: the task suite and both benchmarks in CI, a held-out set behind the precision claims, research docs generated from them.

@@ -71,7 +71,8 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 ignore = ["B008"]  # typer.Option(...) defaults are the idiomatic Typer API
 
 [tool.ruff.lint.per-file-ignores]
-"src/oss_pulse/supplychain/rules.py" = ["E501"]  # human-readable catalogue strings
+"src/oss_pulse/supplychain/rules.py" = ["E501"]
+"tests/test_artifact_precision.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

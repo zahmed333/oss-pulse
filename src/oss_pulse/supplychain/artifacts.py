@@ -14,14 +14,15 @@ from __future__ import annotations
 import hashlib
 import io
 import logging
+import re
 import tarfile
 import zipfile
 from collections.abc import Iterator
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import httpx
 
-from oss_pulse.supplychain.code_scan import Hit, scan_file
+from oss_pulse.supplychain.code_scan import INSTALL_SCRIPT, Hit, scan_file
 from oss_pulse.supplychain.findings import Finding
 from oss_pulse.supplychain.rules import rule
 
@@ -92,6 +93,34 @@ def iter_members(filename: str, data: bytes) -> Iterator[tuple[str, bytes]]:
                     yield member.name, fh.read()
 
 
+def files_run_by_root_setup(members: list[tuple[str, bytes]]) -> set[str]:
+    """Non-Python files the sdist's top-level setup.py names, so pip may run them."""
+    setup_py = next(
+        (
+            content
+            for path, content in members
+            if path.count("/") == 1 and path.endswith("/setup.py")
+        ),
+        b"",
+    ).decode("utf-8", "replace")
+    if not setup_py:
+        return set()
+    return {
+        path
+        for path, _ in members
+        if not path.endswith(".py") and PurePosixPath(path).name in setup_py
+    }
+
+
+def installed_path(member: str, context: str) -> str:
+    """Where a file from an sdist or wheel ends up once installed, so the copy of the same
+    file in both archives is reported once."""
+    if context == "sdist":
+        member = member.split("/", 1)[-1]
+        member = member.removeprefix("src/")
+    return re.sub(r"^[^/]+\.data/(?:purelib|platlib)/", "", member)
+
+
 def scan_release(
     package: str, version: str, release_files: list[dict], cache_dir: Path, client: httpx.Client
 ) -> list[Finding]:
@@ -102,8 +131,11 @@ def scan_release(
         try:
             data = download(f, cache_dir, client)
             hits: list[Hit] = []
-            for path, content in iter_members(f["filename"], data):
-                hits.extend(scan_file(path, content, context))
+            members = list(iter_members(f["filename"], data))
+            run_by_setup = files_run_by_root_setup(members) if context == "sdist" else set()
+            for path, content in members:
+                member_context = INSTALL_SCRIPT if path in run_by_setup else context
+                hits.extend(scan_file(path, content, member_context))
         except IntegrityError as exc:
             findings.append(
                 Finding(
@@ -124,10 +156,10 @@ def scan_release(
             log.warning("could not scan %s: %s", f["filename"], exc)
             continue
         for h in hits:
-            path_inside_archive = h.file.split("/", 1)[-1]
-            if (h.rule_id, path_inside_archive) in seen:
+            key = (h.rule_id, installed_path(h.file, context))
+            if key in seen:
                 continue
-            seen.add((h.rule_id, path_inside_archive))
+            seen.add(key)
             r = rule(h.rule_id)
             findings.append(
                 Finding(
