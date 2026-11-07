@@ -54,3 +54,18 @@ def test_wheel_force_includes_the_whole_dbt_project():
     assert not missing, f"not shipped in the wheel: {sorted(missing)}"
     for src in needed:
         assert forced[src] == "oss_pulse/dbt_project/" + src.removeprefix("transform/")
+
+
+def test_this_repository_passes_its_own_scan():
+    """CI runs `oss-pulse scan . --fail-on high --ignore-file .osspulseignore`; a new test
+    fixture full of attack shapes must be listed in .osspulseignore before it is pushed."""
+    from oss_pulse.scan import run_scan
+    from oss_pulse.supplychain.findings import SEVERITY_RANK
+
+    result = run_scan(PROJECT_ROOT, ignore_file=PROJECT_ROOT / ".osspulseignore")
+    blocking = [
+        f"{f.location} {f.rule_id}"
+        for f in result.findings
+        if SEVERITY_RANK[f.severity] >= SEVERITY_RANK["high"]
+    ]
+    assert not blocking, blocking

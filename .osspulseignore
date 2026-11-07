@@ -6,3 +6,4 @@ tests/fakes.py
 tests/test_supply_chain.py
 # The customer task suite writes inert trap fixtures, such as a curl | sh dev container.
 scripts/cx_tasks.sh
+tests/test_artifact_precision.py
