@@ -28,7 +28,7 @@ parameters:
     default: '3.12'
   - name: ossPulseRef
     type: string
-    default: v0.1.0
+    default: 5ee1a95ed3dce2961e7da28f742907dc859ef353
   - name: skip
     type: string
     default: ''

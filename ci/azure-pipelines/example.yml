@@ -17,7 +17,7 @@ resources:
       type: github
       name: zahmed333/oss-pulse
       endpoint: github
-      ref: refs/tags/v0.1.0   # better: a commit SHA you have reviewed
+      ref: 5ee1a95ed3dce2961e7da28f742907dc859ef353   # the oss-pulse commit you reviewed
 
 pool:
   vmImage: ubuntu-latest

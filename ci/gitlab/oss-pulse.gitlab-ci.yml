@@ -11,7 +11,7 @@ variables:
   OSS_PULSE_DEPENDENCY_FILE: requirements.txt
   OSS_PULSE_SCAN_PATH: .
   OSS_PULSE_FAIL_ON: high
-  OSS_PULSE_REF: v0.1.0
+  OSS_PULSE_REF: 5ee1a95ed3dce2961e7da28f742907dc859ef353
   OSS_PULSE_SKIP: ""
 
 oss-pulse:

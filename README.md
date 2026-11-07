@@ -33,7 +33,7 @@ oss-pulse is built for two attacks that antivirus and vulnerability scanners don
 ## Quick start
 
 ```sh
-pip install git+https://github.com/zahmed333/oss-pulse@v0.1.0   # not on PyPI yet
+pip install git+https://github.com/zahmed333/oss-pulse   # not on PyPI yet
 
 oss-pulse scan ~/take-home --fail-on high   # a folder someone sent you
 oss-pulse check requirements.txt            # the packages you are about to install

@@ -50,7 +50,7 @@ If your organization does not allow GitHub service connections, copy the templat
 | `internalPackages` | `[]` | Your private package names, checked for dependency confusion |
 | `ignoreFile` | `''` | Your reviewed suppressions, for example `.osspulseignore` |
 | `pythonVersion` | `3.12` | Python used to run oss-pulse |
-| `ossPulseRef` | `v0.1.0` | Git ref of oss-pulse to install; see [Pinning](#pinning) |
+| `ossPulseRef` | a reviewed commit SHA | Git ref of oss-pulse to install; see [Pinning](#pinning) |
 | `skip` | `''` | Sources not to contact, for example `osv,scorecard`; see [Locked-down networks](#locked-down-networks) |
 | `runDoctor` | `true` | Log which services the agent can reach before the check |
 | `commentOnPullRequest` | `true` | Keep one oss-pulse comment on the pull request |
@@ -92,7 +92,7 @@ What to do when a service is blocked:
 
 ## Pinning
 
-The templates install a fixed release, `v0.1.0`, so a pipeline does not change because oss-pulse's `main` changed. For the strongest guarantee, pin both the template and the install to a commit SHA you have reviewed: set `ref:` in the Azure DevOps `resources` block (or the `@<sha>` in a GitHub `uses:`) and `ossPulseRef` to the same SHA. A tag can be moved by whoever controls the repository; a SHA cannot.
+The templates install a fixed commit of oss-pulse (`5ee1a95ed3dc`), so a pipeline does not change because oss-pulse's `main` changed. To upgrade, review the changes and set `ossPulseRef` (Azure DevOps), `OSS_PULSE_REF` (GitLab) or the `@<sha>` in a GitHub `uses:` to the new commit. In Azure DevOps, set the `ref:` of the `resources` block to the same commit, so the template and the code it installs match. Use commit SHAs rather than tags or branches: whoever controls a repository can move a tag, but not a commit.
 
 ## GitHub Actions
 
