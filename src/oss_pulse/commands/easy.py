@@ -11,7 +11,7 @@ import typer
 from oss_pulse.scan import IGNORE_FILE
 
 DEPENDENCY_FILES = ("requirements.txt", "pyproject.toml")
-RELEASE = "8b3b12b52d6ceb6e9bfefc470ac67571c23e4c17"
+RELEASE = "0ee47501f69e4b8b7f2d916700467f2dcfaf4308"
 
 easy = typer.Typer()
 

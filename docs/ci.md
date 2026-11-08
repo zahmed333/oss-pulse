@@ -94,7 +94,7 @@ What to do when a service is blocked:
 
 ## Pinning
 
-The templates install a fixed commit of oss-pulse (`5ee1a95ed3dc`), so a pipeline does not change because oss-pulse's `main` changed. To upgrade, review the changes and set `ossPulseRef` (Azure DevOps), `OSS_PULSE_REF` (GitLab) or the `@<sha>` in a GitHub `uses:` to the new commit. In Azure DevOps, set the `ref:` of the `resources` block to the same commit, so the template and the code it installs match. Use commit SHAs rather than tags or branches: whoever controls a repository can move a tag, but not a commit.
+The templates install a fixed commit of oss-pulse (`0ee47501f69e`), so a pipeline does not change because oss-pulse's `main` changed. To upgrade, review the changes and set `ossPulseRef` (Azure DevOps), `OSS_PULSE_REF` (GitLab) or the `@<sha>` in a GitHub `uses:` to the new commit. In Azure DevOps, set the `ref:` of the `resources` block to the same commit, so the template and the code it installs match. Use commit SHAs rather than tags or branches: whoever controls a repository can move a tag, but not a commit.
 
 ## GitHub Actions
 
