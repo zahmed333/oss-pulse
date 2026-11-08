@@ -15,13 +15,16 @@ make lint
 | Path | Responsibility |
 |---|---|
 | `src/oss_pulse/cli.py` | Builds the `oss-pulse` command from the command modules. |
-| `src/oss_pulse/commands/security.py` | `check`, `scan` and `rules`. |
+| `src/oss_pulse/commands/security.py` | `check`, `scan`, `rules`, `doctor` and `pr-comment`. |
+| `src/oss_pulse/commands/easy.py` | Plain `oss-pulse`, `init` and `accept`. |
+| `src/oss_pulse/terminal.py` | The verdict-first view people see in a terminal. |
 | `src/oss_pulse/commands/lakehouse.py` | The GH Archive health pipeline commands (`ingest`, `transform`, `report`, `demo`). |
 | `src/oss_pulse/check/pipeline.py` | One `check` run as named steps: fetch PyPI metadata, detect lookalikes, fetch GitHub activity, detect provenance changes, scan release files, store, decide, load the result. |
 | `src/oss_pulse/check/report.py` | Markdown and JSON output for `check`. |
 | `src/oss_pulse/scan/pipeline.py` | One `scan` run as named steps: find, add lookalike dependencies, flag a planted ignore file, apply the user's ignore file, sort. |
 | `src/oss_pulse/scan/report.py` | Markdown and JSON output for `scan`. |
 | `src/oss_pulse/supplychain/code_scan.py` | File-content checks. Each rule is one small function in `TEXT_CHECKS`; adding a rule means adding one function. |
+| `src/oss_pulse/supplychain/findings_store.py` | Writes findings to Parquet for `check`. Kept apart so `scan` installs without PyArrow, DuckDB or dbt. |
 | `src/oss_pulse/supplychain/` | Detectors. Each takes data in and returns `Finding`s; none of them fetch, store or print. |
 | `src/oss_pulse/ingest/` | Source clients and bronze writers, one module per source. |
 | `src/oss_pulse/ci/` | CI outputs: provider detection and log annotations, JUnit, SARIF, the Azure DevOps pull-request comment. |

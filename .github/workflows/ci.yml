@@ -56,6 +56,14 @@ jobs:
           if "$RUNNER_TEMP/venv/bin/oss-pulse" scan "$trap_dir" --fail-on high; then
             echo "the auto-run task was not blocked"; exit 1
           fi
+      - name: the slim install has no data pipeline, and check says how to add it
+        run: |
+          if "$RUNNER_TEMP/venv/bin/python" -c "import duckdb" 2>/dev/null; then
+            echo "the slim install pulled in duckdb"; exit 1
+          fi
+          set +e
+          "$RUNNER_TEMP/venv/bin/oss-pulse" check pyproject.toml 2> "$RUNNER_TEMP/check.err"
+          test $? -eq 2 && grep -q "oss-pulse\[check\]" "$RUNNER_TEMP/check.err"
       - name: JUnit and SARIF outputs are valid
         run: |
           "$RUNNER_TEMP/venv/bin/oss-pulse" scan . --ignore-file .osspulseignore --annotations none \
@@ -63,7 +71,8 @@ jobs:
           python -c "import sys, json, xml.etree.ElementTree as E; E.parse(sys.argv[1]); assert json.load(open(sys.argv[2]))['version'] == '2.1.0'" "$RUNNER_TEMP/scan.xml" "$RUNNER_TEMP/scan.sarif"
       - name: check runs the dbt project bundled in the wheel
         run: |
-          "$RUNNER_TEMP/venv/bin/oss-pulse" check pyproject.toml --data-dir "$RUNNER_TEMP/lake" --no-scan-artifacts
+          "$RUNNER_TEMP/venv/bin/pip" install "$(ls dist/*.whl)[check]"
+          "$RUNNER_TEMP/venv/bin/oss-pulse" check pyproject.toml --data-dir "$RUNNER_TEMP/lake" --no-scan-artifacts --fail-on never
           site=$("$RUNNER_TEMP/venv/bin/python" -c "import oss_pulse, pathlib; print(pathlib.Path(oss_pulse.__file__).parent)")
           test ! -e "$site/dbt_project/target" && test ! -e "$site/dbt_project/logs"
 

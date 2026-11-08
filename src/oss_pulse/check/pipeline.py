@@ -27,7 +27,8 @@ from oss_pulse.ingest.dependencies import DeclaredDependency, parse_dependency_f
 from oss_pulse.ingest.io import atomic_write_table
 from oss_pulse.ingest.schema import DEPENDENCIES
 from oss_pulse.supplychain import artifacts, provenance, typosquat
-from oss_pulse.supplychain.findings import SEVERITY_RANK, Finding, write_findings
+from oss_pulse.supplychain.findings import SEVERITY_RANK, Finding
+from oss_pulse.supplychain.findings_store import write_findings
 from oss_pulse.transform import run_dbt
 
 log = logging.getLogger(__name__)

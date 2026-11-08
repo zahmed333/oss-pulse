@@ -13,6 +13,10 @@ ANNOTATION_MODES = ("auto", "azure", "github", "gitlab", "jenkins", "generic", "
 
 JUNIT_OPTION = typer.Option(None, "--junit", help="Also write JUnit XML (test results in any CI)")
 SARIF_OPTION = typer.Option(None, "--sarif", help="Also write SARIF 2.1.0 (code scanning)")
+FORMATS = ("text", "markdown", "json")
+FORMAT_OPTION = typer.Option(
+    "text", "--format", help="What to print: text (for people), markdown or json"
+)
 ANNOTATIONS_OPTION = typer.Option(
     "auto",
     "--annotations",
@@ -33,7 +37,7 @@ def check(
     ),
     days: int = typer.Option(90, help="Activity window in days"),
     fail_on: str = typer.Option(
-        "never", help="Exit 1 if any dependency is at/above: critical | high | medium | never"
+        "high", help="Exit 1 if any dependency is at/above: critical | high | medium | never"
     ),
     internal: list[str] = typer.Option(
         [], "--internal", help="Private package name to guard against dependency confusion"
@@ -47,6 +51,7 @@ def check(
     junit: Path = JUNIT_OPTION,
     sarif: Path = SARIF_OPTION,
     annotations: str = ANNOTATIONS_OPTION,
+    output_format: str = FORMAT_OPTION,
     skip: str = typer.Option(
         "",
         "--skip",
@@ -55,6 +60,7 @@ def check(
     ),
 ) -> None:
     """Assess supply-chain risk of your project's dependencies."""
+    _require_check_extra()
     from oss_pulse.check import SEVERITY, render_json, render_markdown, run_check
     from oss_pulse.ci.finding import from_check
 
@@ -71,7 +77,14 @@ def check(
         skip=skipped,
     )
     md = render_markdown(result)
-    typer.echo(md)
+    from oss_pulse.terminal import render_check, use_colour
+
+    printed = {
+        "text": lambda: render_check(result, colour=use_colour()),
+        "markdown": lambda: md,
+        "json": lambda: render_json(result),
+    }
+    typer.echo(printed[_checked_format(output_format)](), nl=False)
     if markdown:
         markdown.write_text(md)
     if json_out:
@@ -99,10 +112,11 @@ def scan(
         file_okay=False,
         help="Repository or folder to inspect (nothing is executed)",
     ),
-    fail_on: str = typer.Option("never", help="critical | high | medium | never"),
+    fail_on: str = typer.Option(
+        "high", help="Exit 1 at this level or above: critical | high | medium | never"
+    ),
     ignore_file: Path = typer.Option(
         None,
-        exists=True,
         dir_okay=False,
         help="Your own list of reviewed paths or rule ids to suppress. A file inside the "
         "scanned folder is never applied unless you pass it here.",
@@ -112,6 +126,7 @@ def scan(
     junit: Path = JUNIT_OPTION,
     sarif: Path = SARIF_OPTION,
     annotations: str = ANNOTATIONS_OPTION,
+    output_format: str = FORMAT_OPTION,
 ) -> None:
     """Read an untrusted repository before you open or install it.
 
@@ -127,7 +142,16 @@ def scan(
     _validate_annotations(annotations)
     result = run_scan(path, ignore_file=ignore_file)
     md = render_scan_markdown(result)
-    typer.echo(md)
+    from oss_pulse.terminal import render_scan, use_colour
+
+    printed = {
+        "text": lambda: render_scan(
+            result.findings, result.root.name, len(result.suppressed), colour=use_colour()
+        ),
+        "markdown": lambda: md,
+        "json": lambda: render_scan_json(result),
+    }
+    typer.echo(printed[_checked_format(output_format)](), nl=False)
     if markdown:
         markdown.write_text(md)
     if json_out:
@@ -199,6 +223,26 @@ def pr_comment(
 def _write_ci_outputs(findings, outputs, *, suite: str, fail_on: str, markdown) -> None:
     for line in outputs.write(findings, suite=suite, fail_on=fail_on, markdown=markdown):
         typer.echo(line)
+
+
+def _checked_format(value: str) -> str:
+    if value not in FORMATS:
+        raise typer.BadParameter(f"--format must be one of: {', '.join(FORMATS)}")
+    return value
+
+
+def _require_check_extra() -> None:
+    import importlib.util
+
+    missing = [m for m in ("duckdb", "pyarrow", "dbt") if importlib.util.find_spec(m) is None]
+    if missing:
+        typer.echo(
+            "error: check needs the data pipeline, which is an optional install\n\n"
+            "  pip install 'oss-pulse[check]'\n\n"
+            "scan works without it.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
 
 
 def _parse_skip(value: str) -> set[str]:

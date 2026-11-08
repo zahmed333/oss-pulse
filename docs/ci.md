@@ -1,5 +1,7 @@
 # Running oss-pulse in CI/CD
 
+The quickest start: run `oss-pulse init` in your repository. It detects GitHub Actions, Azure DevOps or GitLab and writes a pipeline that runs on pull requests, pushes to main and weekly. The rest of this page is for tuning it.
+
 oss-pulse runs the same way in every CI system: install it, run `scan` and `check`, and let the exit code gate the build. On top of that, each command can write outputs that CI systems already know how to show:
 
 | Output | Flag | Shown in |
@@ -117,7 +119,7 @@ Findings appear in the merge request's test report, and the Markdown, SARIF and 
 Run the commands directly and publish the JUnit file with your system's test-report step:
 
 ```sh
-pip install "git+https://github.com/zahmed333/oss-pulse@main"
+pip install "oss-pulse[check] @ git+https://github.com/zahmed333/oss-pulse"
 oss-pulse scan . --fail-on high --junit oss-pulse-scan.xml --sarif oss-pulse-scan.sarif
 oss-pulse check requirements.txt --fail-on high --junit oss-pulse-check.xml --data-dir .oss-pulse
 ```

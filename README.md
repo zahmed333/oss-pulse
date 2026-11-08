@@ -32,16 +32,42 @@ oss-pulse is built for two attacks that antivirus and vulnerability scanners don
 
 ## Quick start
 
-```sh
-pip install git+https://github.com/zahmed333/oss-pulse   # not on PyPI yet
+**Check a folder someone sent you** (no setup, nothing is run):
 
-oss-pulse scan ~/take-home --fail-on high   # a folder someone sent you
-oss-pulse check requirements.txt            # the packages you are about to install
-oss-pulse rules                             # every rule, and the attack it comes from
-oss-pulse doctor                            # which services this machine can reach
+```sh
+pip install git+https://github.com/zahmed333/oss-pulse   # 38 MB; not on PyPI yet
+cd ~/take-home
+oss-pulse
 ```
 
-`scan` exits 1 when it finds something at or above `--fail-on`, so `oss-pulse scan ~/take-home --fail-on high && code ~/take-home` only opens a folder that passed. The example above is an inert fixture from the test suite; nothing in it is real malware.
+It answers with `hold`, `review` or `clear`, shows the lines that matter, and says what to do next. It exits 1 on hold, so `oss-pulse scan ~/take-home && code ~/take-home` won't open a folder that should stay closed. Already opened one? Read [If you already opened it](docs/if-you-opened-it.md).
+
+**Check your project's dependencies too:**
+
+```sh
+pip install "oss-pulse[check] @ git+https://github.com/zahmed333/oss-pulse"
+oss-pulse                          # in your project: scans it and checks requirements.txt or pyproject.toml
+```
+
+**Add it to your team's CI** (GitHub Actions, Azure DevOps or GitLab, detected from the repository):
+
+```sh
+oss-pulse init                     # writes the pipeline: pull requests, pushes to main, and weekly
+oss-pulse accept "tests/fixtures/*" --reason "inert samples for our tests"
+```
+
+`accept` records a reviewed finding, with your reason and the date, in `.osspulseignore`. Pipelines written by `init` apply it; a folder you are vetting can never apply its own.
+
+**Before every commit:** add the hook to `.pre-commit-config.yaml`:
+
+```yaml
+- repo: https://github.com/zahmed333/oss-pulse
+  rev: 8b3b12b52d6ceb6e9bfefc470ac67571c23e4c17
+  hooks:
+    - id: oss-pulse-scan
+```
+
+Other commands: `oss-pulse rules` lists every rule and the attack behind it, `oss-pulse doctor` checks which services a locked-down machine can reach, and `--format markdown` or `--format json` print the report for scripts. The example at the top is an inert fixture from the test suite; nothing in it is real malware.
 
 ## How it works
 

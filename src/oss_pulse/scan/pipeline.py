@@ -25,7 +25,7 @@ class ScanResult:
 
 def run_scan(path: Path, ignore_file: Path | None = None) -> ScanResult:
     root = path.resolve()
-    users_ignore_file = ignore_file.resolve() if ignore_file else None
+    users_ignore_file = ignore_file.resolve() if ignore_file and ignore_file.is_file() else None
     findings = scan_repository(root) + lookalike_dependencies(root)
     if planted := planted_ignore_file(root, findings, users_ignore_file):
         findings.append(planted)
@@ -47,8 +47,10 @@ def lookalike_dependencies(root: Path) -> list[Finding]:
         except (ValueError, OSError):
             continue
         for f in typosquat.check_names(names, popular):
+            declared, popular = f.target, f.evidence
             f.target, f.target_type, f.location = root.name, "repository", dep_file.name
-            f.detail = f"dependency '{f.evidence}'-lookalike declared: {f.detail}"
+            f.evidence = f"{declared} (looks like {popular})"
+            f.detail = f"declares {declared}, which looks like the popular package {popular}"
             findings.append(f)
     return findings
 

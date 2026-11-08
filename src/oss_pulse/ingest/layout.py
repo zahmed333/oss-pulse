@@ -47,7 +47,7 @@ def ensure_bronze_layout(settings: Settings) -> None:
                 schema.empty_table(), b / source / partition / f"{PLACEHOLDER}.parquet"
             )
 
-    from oss_pulse.supplychain.findings import FINDINGS
+    from oss_pulse.supplychain.findings_store import FINDINGS
 
     if not _has_files(b / "findings", "**/*.parquet"):
         atomic_write_table(

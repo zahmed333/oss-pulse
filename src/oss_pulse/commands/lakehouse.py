@@ -1,15 +1,15 @@
-"""Commands for the GH Archive ecosystem-health lakehouse. Not needed for scan or check."""
+"""Commands for the GH Archive ecosystem-health lakehouse. Not needed for scan or check.
+
+Their dependencies (DuckDB, PyArrow, dbt) are imported inside each command, so the CLI
+starts without them and `scan` works on a slim install."""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-import duckdb
 import typer
 
 from oss_pulse.config import get_settings
-from oss_pulse.ingest import gharchive, pypi, synthetic
-from oss_pulse.transform import run_dbt
 
 lakehouse = typer.Typer()
 ingest_app = typer.Typer(help="Land source data in the bronze layer.", no_args_is_help=True)
@@ -18,6 +18,8 @@ lakehouse.add_typer(ingest_app, name="ingest")
 
 def _hour(value: str) -> datetime:
     """Accepts 2024-01-01, 2024-01-01T05 or full ISO timestamps (UTC)."""
+    from oss_pulse.ingest import gharchive
+
     if len(value) == 13:  # YYYY-MM-DDTHH
         value += ":00"
     return gharchive.floor_hour(datetime.fromisoformat(value))
@@ -30,6 +32,8 @@ def ingest_gharchive(
     local: bool = typer.Option(False, help="Only use files already in the raw zone"),
 ) -> None:
     """Ingest GH Archive hours in [start, end) into bronze Parquet partitions."""
+    from oss_pulse.ingest import gharchive
+
     settings = get_settings()
     hours = gharchive.hour_range(_hour(start), _hour(end))
     totals = {"written": 0, "rejected": 0, "duplicate": 0}
@@ -44,12 +48,16 @@ def ingest_gharchive(
 @ingest_app.command("pypi")
 def ingest_pypi() -> None:
     """Snapshot PyPI release history for all tracked packages."""
+    from oss_pulse.ingest import pypi
+
     typer.echo(f"wrote {pypi.ingest_pypi(get_settings())}")
 
 
 @ingest_app.command("reference")
 def ingest_reference() -> None:
     """Publish tracked_projects.yml as a bronze reference table."""
+    from oss_pulse.ingest import pypi
+
     typer.echo(f"wrote {pypi.write_reference(get_settings())}")
 
 
@@ -58,6 +66,8 @@ def make_synthetic(
     start: str = typer.Option(...), end: str = typer.Option(...), seed: int = 42
 ) -> None:
     """Generate GH Archive/PyPI-format files in the raw zone (offline mode)."""
+    from oss_pulse.ingest import synthetic
+
     settings = get_settings()
     files = synthetic.generate_gharchive(settings, _hour(start), _hour(end), seed=seed)
     synthetic.generate_pypi(settings, _hour(end), seed=seed)
@@ -70,6 +80,8 @@ def transform(
     full_refresh: bool = typer.Option(False, "--full-refresh"),
 ) -> None:
     """Run `dbt build` (models + tests) against the DuckDB warehouse."""
+    from oss_pulse.transform import run_dbt
+
     args = ["build"]
     if select:
         args += ["--select", select]
@@ -82,6 +94,8 @@ def transform(
 @lakehouse.command("report")
 def report(limit: int = 15) -> None:
     """Print the latest repo health leaderboard from the gold layer."""
+    import duckdb
+
     settings = get_settings()
     # not read_only: in `demo`, dbt-duckdb still holds an in-process read-write handle
     con = duckdb.connect(str(settings.warehouse_path))
@@ -101,6 +115,9 @@ def report(limit: int = 15) -> None:
 @lakehouse.command("demo")
 def demo(days: int = 3, seed: int = 42) -> None:
     """Offline end-to-end run: synthetic data -> bronze -> dbt build -> report."""
+    from oss_pulse.ingest import gharchive, pypi, synthetic
+    from oss_pulse.transform import run_dbt
+
     settings = get_settings()
     end = gharchive.floor_hour(datetime.now(UTC)).replace(hour=0)
     start = end - timedelta(days=days)

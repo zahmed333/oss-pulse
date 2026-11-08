@@ -176,7 +176,7 @@ row T01-readme-install-copy-pastes "$r" "-" "${line:-no pip, pipx or uv install 
 
 # T02 Fresh install succeeds (time, package count, size)
 rm -rf venv && "$PY" -m venv venv
-t0=$(date +%s); venv/bin/pip install --quiet "$SRC" > pip.log 2>&1; rc=$?; t1=$(date +%s)
+t0=$(date +%s); venv/bin/pip install --quiet "$SRC[check]" > pip.log 2>&1; rc=$?; t1=$(date +%s)
 n=$(venv/bin/pip list 2> /dev/null | tail -n +3 | wc -l); mb=$(du -sm venv | cut -f1)
 [ $rc -eq 0 ] && r=PASS || r=FAIL
 row T02-fresh-install "$r" "$((t1 - t0))s, $n packages, $mb MB" "pip rc=$rc"

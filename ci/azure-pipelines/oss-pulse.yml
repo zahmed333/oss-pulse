@@ -45,7 +45,7 @@ steps:
     inputs:
       versionSpec: ${{ parameters.pythonVersion }}
 
-  - bash: python -m pip install --quiet "git+https://github.com/zahmed333/oss-pulse@${OSS_PULSE_REF}"
+  - bash: python -m pip install --quiet "oss-pulse[check] @ git+https://github.com/zahmed333/oss-pulse@${OSS_PULSE_REF}"
     displayName: oss-pulse - install
     env:
       OSS_PULSE_REF: ${{ parameters.ossPulseRef }}

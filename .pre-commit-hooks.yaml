@@ -1,0 +1,7 @@
+- id: oss-pulse-scan
+  name: oss-pulse scan
+  description: Stop a commit that adds code which runs on open or install, hides a payload or reads secrets.
+  entry: oss-pulse scan . --fail-on high --ignore-file .osspulseignore --annotations none
+  language: python
+  pass_filenames: false
+  always_run: true
