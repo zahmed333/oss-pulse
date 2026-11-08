@@ -1,5 +1,7 @@
 # Contributing to oss-pulse
 
+See [docs/architecture.md](docs/architecture.md) for how the pieces fit together.
+
 ## Set up
 
 ```sh
@@ -25,7 +27,7 @@ make lint
 | `src/oss_pulse/scan/report.py` | Markdown and JSON output for `scan`. |
 | `src/oss_pulse/supplychain/code_scan.py` | File-content checks. Each rule is one small function in `TEXT_CHECKS`; adding a rule means adding one function. |
 | `src/oss_pulse/supplychain/findings_store.py` | Writes findings to Parquet for `check`. Kept apart so `scan` installs without PyArrow, DuckDB or dbt. |
-| `src/oss_pulse/supplychain/` | Detectors. Each takes data in and returns `Finding`s; none of them fetch, store or print. |
+| `src/oss_pulse/supplychain/` | Detectors. Each returns `Finding`s and never stores or prints; only `artifacts.py` and `provenance.py` download what they inspect, through the client they are given. |
 | `src/oss_pulse/ingest/` | Source clients and bronze writers, one module per source. |
 | `src/oss_pulse/ci/` | CI outputs: provider detection and log annotations, JUnit, SARIF, the Azure DevOps pull-request comment. |
 | `ci/` | Pipeline templates for Azure DevOps and GitLab. |

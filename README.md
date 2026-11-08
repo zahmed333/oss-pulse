@@ -15,7 +15,7 @@ Nothing is executed. Every finding points to the file, the line and the bytes th
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
-[Quick start](#quick-start) · [What it checks](#what-it-checks) · [CI/CD](#in-ci) · [How it works](#how-it-works) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
+[Quick start](#quick-start) · [What it checks](#what-it-checks) · [CI/CD](#in-ci) · [How it works](#how-it-works) · [Architecture](docs/architecture.md) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
 <img src="docs/brand/scan-example.svg" alt="oss-pulse scan output for a fake take-home assignment: an auto-run VS Code task, JavaScript hidden in a font file, a typosquatted dependency and an npm install hook" width="860">
 
@@ -80,7 +80,7 @@ flowchart LR
     E --> F["Report<br/>terminal · PR comment<br/>JSON · exit code"]
 ```
 
-Fetch the data, read the code without running it, store everything in tables, apply the rules in SQL, report. The [architecture section](#architecture) explains why each step exists.
+Fetch the data, read the code without running it, store everything in tables, apply the rules in SQL, report. [docs/architecture.md](docs/architecture.md) has the diagrams for both commands, the trust boundaries and where each piece of code lives.
 
 ## What it checks
 
