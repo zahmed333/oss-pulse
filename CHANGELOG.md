@@ -19,6 +19,11 @@ First public version (0.1.0, not yet on PyPI).
 - A scanned folder can't configure its own scan: an `.osspulseignore` inside it is reported, not applied.
 - Text quoted from scanned files can't inject terminal escapes, Markdown, GitHub workflow commands or Azure Pipelines `##vso` commands.
 
+### Detection
+
+- Script code disguised as a font or image is now read like any other script, so the report says what it does (reads SSH keys, sends data to a Discord webhook) and not only that it is disguised.
+- The environment packed into data that the same file sends to an exfiltration endpoint (`env: process.env` inside a posted object) is reported as CODE-ENVDUMP. Passing `{ env: process.env }` to a child process is not.
+
 ### Precision
 
 - No finding at medium or above on the 250 most-downloaded PyPI packages; method and limits in [docs/benchmarks.md](docs/benchmarks.md).

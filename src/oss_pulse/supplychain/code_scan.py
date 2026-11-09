@@ -155,6 +155,10 @@ RE = {
         r"|\b(?:json|data|params)\s*=\s*(?:dict\s*\(\s*)?os\.environ\s*[,)]"
         r"|JSON\.stringify\s*\(\s*process\.env\s*\)"
     ),
+    "env_in_payload": re.compile(
+        r"\b\w+\s*:\s*(?:dict\s*\(\s*)?(?:process\.env|os\.environ)\b(?!\s*[.\[])"
+        r"|[\"']\w+[\"']\s*:\s*(?:dict\s*\(\s*)?(?:process\.env|os\.environ)\b(?!\s*[.\[])"
+    ),
     "exfil": re.compile(
         r"(?:discord(?:app)?\.com/api/webhooks/|api\.telegram\.org/bot|pastebin\.com/raw"
         r"|transfer\.sh|ngrok(?:-free)?\.(?:io|app|dev)|webhook\.site|requestbin|pipedream\.net"
@@ -509,8 +513,14 @@ def _secret_theft(src: SourceFile) -> list[Hit]:
 
 
 def _environment_dump(src: SourceFile) -> list[Hit]:
-    m = src.find("envdump")
-    return [src.hit("CODE-ENVDUMP", m)] if m else []
+    """Serialising the whole environment, or packing it into an object that the same file
+    sends to an exfiltration endpoint. `{env: process.env}` alone is how child processes
+    are started, so the object form only counts next to an exfiltration endpoint."""
+    if m := src.find("envdump"):
+        return [src.hit("CODE-ENVDUMP", m)]
+    if (m := src.find("env_in_payload")) and src.find("exfil"):
+        return [src.hit("CODE-ENVDUMP", m, detail="environment packed into data sent out")]
+    return []
 
 
 def _clipboard_wallet_swap(src: SourceFile) -> list[Hit]:
@@ -612,15 +622,15 @@ def scan_file(file: str, data: bytes, context: str) -> list[Hit]:
         if data and not head.startswith(MEDIA_MAGIC):
             sample = data[:4000].decode("utf-8", "ignore")
             if re.search(r"\b(?:function|require\(|import |eval\(|exec\(|child_process)", sample):
-                return [
-                    Hit(
-                        "CODE-HIDDEN",
-                        file,
-                        1,
-                        next((ln.strip() for ln in sample.splitlines() if ln.strip()), "")[:140],
-                        detail=f"script content inside a {suffix} file",
-                    )
-                ]
+                disguise = Hit(
+                    "CODE-HIDDEN",
+                    file,
+                    1,
+                    next((ln.strip() for ln in sample.splitlines() if ln.strip()), "")[:140],
+                    detail=f"script content inside a {suffix} file",
+                )
+                text = data[:MAX_TEXT_BYTES].decode("utf-8", "replace")
+                return [disguise, *scan_text(file, text, context)]
         return []
 
     for magic, kind in BINARY_MAGIC.items():

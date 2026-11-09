@@ -11,3 +11,4 @@ tests/test_artifact_precision.py
 examples/take-home/.vscode/tasks.json
 examples/take-home/.vscode/assets/font-awesome.woff2
 examples/take-home/package.json
+tests/test_real_world_payloads.py
