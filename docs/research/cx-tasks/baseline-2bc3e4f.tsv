@@ -1,7 +1,7 @@
-# oss-pulse scripted customer tasks	commit=8f9ef74	date=2026-11-05T01:30:41Z	os=Linux 6.18.44-fc-v236 x86_64	python=3.13.18	tasks_sha256=6f61709103f019052841c93834f2d9b054f9e1bb89faabfb372aededf09f4845
+# oss-pulse scripted customer tasks	commit=2bc3e4f	date=2026-11-05T01:30:01Z	os=Linux 6.18.44-fc-v236 x86_64	python=3.13.18	tasks_sha256=6f61709103f019052841c93834f2d9b054f9e1bb89faabfb372aededf09f4845
 task	result	measure	evidence
 T01-readme-install-copy-pastes	FAIL	-	pip install git+https://github.com/<you>/oss-pulse
-T02-fresh-install	PASS	16s, 73 packages, 575 MB	pip rc=0
+T02-fresh-install	PASS	17s, 73 packages, 575 MB	pip rc=0
 T03-fresh-scan-clean-folder	PASS	rc=0	**0 findings** · 🟢 no findings
 T04-fresh-check-benign-deps	PASS	rc=0, 9s	**1 dependencies** in `requirements.txt` · ⚪ 1 unknown
 T05-scan-detects-auto-run	PASS	rc=1	**1 findings** · 🔴 1 critical
@@ -31,5 +31,5 @@ T28-zip-trap	FAIL	rc=2	Invalid value for 'path': Directory 'fx/trap.zip' is a fi
 T29-fetch-then-eval	FAIL	rc=0	**0 findings** · 🟢 no findings
 T30-devcontainer-initialize-command	FAIL	rc=1	**1 findings** · 🟠 1 high
 T31-guardrail-legit-take-home	PASS	rc=0	**2 findings** · 🟡 2 medium
-T32-guardrail-decoys-scan-fast	PASS	rc=0, 0.45s	**1 findings** · 🟠 1 high
+T32-guardrail-decoys-scan-fast	PASS	rc=0, 0.41s	**1 findings** · 🟠 1 high
 # passed 7 of 32

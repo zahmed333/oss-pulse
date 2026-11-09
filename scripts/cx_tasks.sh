@@ -20,8 +20,8 @@
 #     gets its own commit, a new hash and new baselines, with the reason written here.
 #   - Report the failing rows with the number.
 #
-# Baselines are in docs/research/cx-tasks/. T14 to T30 failed at 2410415 and at 34bdad4.
-# T31 and T32 are guardrails: they passed at 34bdad4 and have to keep passing.
+# Baselines are in docs/research/cx-tasks/. T14 to T30 failed at b216953 and at 2bc3e4f.
+# T31 and T32 are guardrails: they passed at 2bc3e4f and have to keep passing.
 #
 # Changed from the 13-task version (docs/research/cx-tasks/original/):
 #   T01 took the first line starting 'pip install'. It now takes the first pip, pipx or uv
@@ -36,7 +36,7 @@
 #   T13 passed for any file under docs/ that used two words, privacy and pypi.org, and the
 #       research report written with this version does. It now needs one file, README.md
 #       or a doc outside docs/research/, that mentions privacy and names every host check
-#       contacts. At 2410415 and 34bdad4 both versions of T13 fail.
+#       contacts. At b216953 and 2bc3e4f both versions of T13 fail.
 set -u
 PY=${PYTHON:-python3}
 SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"

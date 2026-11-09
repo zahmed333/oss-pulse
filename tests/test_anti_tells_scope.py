@@ -24,7 +24,7 @@ import yaml
 
 REPO = Path(__file__).resolve().parents[1]
 LINTER = REPO / "scripts" / "anti_tells.py"
-BASELINE = REPO / "docs" / "research" / "anti-tells-34bdad4.txt"
+BASELINE = REPO / "docs" / "research" / "anti-tells-2bc3e4f.txt"
 ROCKET = "\U0001f680"
 
 spec = importlib.util.spec_from_file_location("anti_tells", LINTER)

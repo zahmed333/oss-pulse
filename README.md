@@ -62,7 +62,7 @@ oss-pulse accept "tests/fixtures/*" --reason "inert samples for our tests"
 
 ```yaml
 - repo: https://github.com/zahmed333/oss-pulse
-  rev: 0ee47501f69e4b8b7f2d916700467f2dcfaf4308
+  rev: 1f7f6c10f1557f023e19ec80d55a34f7d7463857
   hooks:
     - id: oss-pulse-scan
 ```

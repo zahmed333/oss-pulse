@@ -1,4 +1,4 @@
-# OSS Pulse scripted CX tasks	source=/home/user/oss-pulse@348ba5b	date=2026-11-04T20:33:56Z
+# OSS Pulse scripted CX tasks	source=/home/user/oss-pulse@b545e99	date=2026-11-04T20:33:56Z
 task	result	measure	evidence
 T01-readme-install-copy-pastes	FAIL	-	pip install git+https://github.com/<you>/oss-pulse
 T02-fresh-install	PASS	18s, 73 packages, 575 MB	pip rc=0

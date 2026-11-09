@@ -5,8 +5,8 @@ usage: python scripts/anti_tells.py [--baseline FILE] [REPO]
 Read-only. It prints one line per hit and exits 1 if there is any. With --baseline FILE
 it prints only the hits FILE doesn't list, and exits 1 only for those, so a change can be
 held to "nothing new" while the old hits wait for the change that fixes them. A baseline
-is this script's own output, saved; docs/research/anti-tells-34bdad4.txt is the run at
-commit 34bdad4. Hits match on file, kind and quoted text, not on line number, so moving a
+is this script's own output, saved; docs/research/anti-tells-2bc3e4f.txt is the run at
+commit 2bc3e4f. Hits match on file, kind and quoted text, not on line number, so moving a
 line doesn't make it new and editing a flagged line does.
 
 The rules are the first version's, unchanged: emoji, hype words, "not just X", bold

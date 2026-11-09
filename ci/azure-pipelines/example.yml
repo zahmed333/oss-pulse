@@ -17,7 +17,7 @@ resources:
       type: github
       name: zahmed333/oss-pulse
       endpoint: github
-      ref: 0ee47501f69e4b8b7f2d916700467f2dcfaf4308   # the oss-pulse commit you reviewed
+      ref: 1f7f6c10f1557f023e19ec80d55a34f7d7463857   # the oss-pulse commit you reviewed
 
 pool:
   vmImage: ubuntu-latest
