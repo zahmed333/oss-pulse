@@ -42,7 +42,7 @@ GREY = "#6e7681"
 GREEN = "#3fb950"
 CYAN = "#79c0ff"
 
-TYPED = 'sh install.sh'
+TYPED = "sh install.sh"
 COMMAND = "oss-pulse scan ./take-home"
 
 
