@@ -51,7 +51,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ inputs.python-version }}
 
@@ -98,7 +98,7 @@ runs:
 
     - name: Comment on pull request
       if: inputs.comment == 'true' && github.event_name == 'pull_request'
-      uses: actions/github-script@v7
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       env:
         REPORT: ${{ steps.run.outputs.report }}
       with:

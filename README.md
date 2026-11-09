@@ -135,7 +135,7 @@ steps:
 GitHub Actions:
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 - uses: zahmed333/oss-pulse@<commit-sha>   # pin to a commit, not a tag
   with:
     dependency-file: requirements.txt

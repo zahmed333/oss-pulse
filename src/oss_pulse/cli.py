@@ -21,10 +21,21 @@ app.add_typer(easy)
 app.add_typer(lakehouse)
 
 
+def _print_version(value: bool) -> None:
+    if value:
+        from oss_pulse.ci.outputs import tool_version
+
+        typer.echo(f"oss-pulse {tool_version()}")
+        raise typer.Exit()
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show what oss-pulse is doing"),
+    version: bool = typer.Option(
+        False, "--version", is_eager=True, callback=_print_version, help="Show the version and exit"
+    ),
 ) -> None:
     """Run with no command to check the current folder: what would run if you opened it,
     and, when it has a requirements.txt or pyproject.toml, the packages it would install."""

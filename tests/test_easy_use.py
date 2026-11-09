@@ -104,3 +104,8 @@ def test_pre_commit_hook_is_declared():
     root = Path(__file__).resolve().parents[1]
     hooks = yaml.safe_load((root / ".pre-commit-hooks.yaml").read_text())
     assert hooks[0]["id"] == "oss-pulse-scan" and hooks[0]["pass_filenames"] is False
+
+
+def test_version_flag():
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0 and result.output.startswith("oss-pulse ")
