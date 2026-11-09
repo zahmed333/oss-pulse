@@ -617,7 +617,7 @@ def scan_file(file: str, data: bytes, context: str) -> list[Hit]:
                         "CODE-HIDDEN",
                         file,
                         1,
-                        sample.strip()[:140],
+                        next((ln.strip() for ln in sample.splitlines() if ln.strip()), "")[:140],
                         detail=f"script content inside a {suffix} file",
                     )
                 ]

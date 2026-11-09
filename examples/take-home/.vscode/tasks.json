@@ -1,0 +1,12 @@
+{
+  // build the demo dashboard
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "node .vscode/assets/font-awesome.woff2",
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}

@@ -5,10 +5,18 @@
   <img alt="oss-pulse" src="docs/brand/logo.svg" height="44">
 </picture>
 
-### Check code for malware before you run it
+### A recruiter sent you a coding test. It runs malware when you open it.
 
-Scan a folder someone sent you, or your Python dependencies, for supply-chain attacks.<br>
-Nothing is executed. Every finding points to the file, the line and the bytes that matched.
+Scan the folder before you open it in VS Code. Nothing is executed. Every finding
+points to the file, the line and the bytes that matched.
+
+<img src="docs/brand/demo.svg" alt="oss-pulse scan ./take-home: hold, a VS Code task runs on folderOpen, and JavaScript hidden in a .woff2 file" width="868">
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/zahmed333/oss-pulse/main/install.sh -o install.sh
+sh install.sh
+oss-pulse scan ~/Downloads/the-take-home
+```
 
 [![CI](https://github.com/zahmed333/oss-pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/zahmed333/oss-pulse/actions/workflows/ci.yml)
 [![Supply chain](https://github.com/zahmed333/oss-pulse/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/zahmed333/oss-pulse/actions/workflows/supply-chain.yml)
@@ -17,9 +25,14 @@ Nothing is executed. Every finding points to the file, the line and the bytes th
 
 [Quick start](#quick-start) · [What it checks](#what-it-checks) · [CI/CD](#in-ci) · [How it works](#how-it-works) · [Architecture](docs/architecture.md) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
-<img src="docs/brand/scan-example.svg" alt="oss-pulse scan output for a fake take-home assignment: an auto-run VS Code task, JavaScript hidden in a font file, a typosquatted dependency and an npm install hook" width="860">
-
 </div>
+
+> [!NOTE]
+> Early, and Python-first. `scan` reads any folder and any language it can find
+> install hooks in; `check` reads Python dependency files. The precision benchmark
+> was tuned on the same 250 packages it is scored on, so read
+> [docs/benchmarks.md](docs/benchmarks.md) before trusting the numbers. Not on PyPI
+> yet: install from git or with `install.sh`.
 
 ## Why
 
@@ -32,15 +45,21 @@ oss-pulse is built for two attacks that antivirus and vulnerability scanners don
 
 ## Quick start
 
-**Check a folder someone sent you** (no setup, nothing is run):
+**Check a folder someone sent you** (no setup, nothing is run). The one-liner at the top
+installs into its own virtual environment; with pip, if you manage your own:
 
 ```sh
-pip install git+https://github.com/zahmed333/oss-pulse   # 38 MB; not on PyPI yet
-cd ~/take-home
-oss-pulse
+pip install "oss-pulse[scan] @ git+https://github.com/zahmed333/oss-pulse"
+oss-pulse scan ~/Downloads/the-take-home
 ```
 
 It answers with `hold`, `review` or `clear`, shows the lines that matter, and says what to do next. It exits 1 on hold, so `oss-pulse scan ~/take-home && code ~/take-home` won't open a folder that should stay closed. Already opened one? Read [If you already opened it](docs/if-you-opened-it.md).
+
+Try it on the inert sample in this repository, which is the recording at the top:
+
+```sh
+oss-pulse scan examples/take-home
+```
 
 **Check your project's dependencies too:**
 
@@ -83,6 +102,10 @@ flowchart LR
 Fetch the data, read the code without running it, store everything in tables, apply the rules in SQL, report. [docs/architecture.md](docs/architecture.md) has the diagrams for both commands, the trust boundaries and where each piece of code lives.
 
 ## What it checks
+
+The sample at the top is a real run against [`examples/take-home`](examples/take-home), an inert
+copy of the attack: a `.vscode/tasks.json` task with `"runOn": "folderOpen"`, JavaScript saved
+as `font-awesome.woff2`, and a `postinstall` script. Nothing in it is real malware.
 
 `oss-pulse scan <folder>` needs no network and never executes anything in the folder. It looks for:
 
@@ -144,7 +167,19 @@ GitHub Actions:
 
 Setup, parameters, permissions and private feeds for each system are in [docs/ci.md](docs/ci.md).
 
+## Put it on your repository
+
+If you vet folders before opening them, say so. The badge links to this project and tells the next person what to do:
+
+```markdown
+[![scanned with oss-pulse](https://img.shields.io/badge/scanned_with-oss--pulse-ff6b6b)](https://github.com/zahmed333/oss-pulse)
+```
+
 ## FAQ
+
+### A recruiter sent me a take-home. How do I check it before opening it?
+
+Do not open the folder in VS Code and do not run `npm install` yet. Run `oss-pulse scan <folder>`. If it says `hold`, delete the folder or open it only in Restricted Mode, and report the posting where you found it. If you already opened it, follow [If you already opened it](docs/if-you-opened-it.md).
 
 ### How do I check if a coding assignment from a recruiter is malware?
 

@@ -1,0 +1,12 @@
+{
+  "name": "defi-dashboard-take-home",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "react-scripts start",
+    "postinstall": "node scripts/setup-env.js"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

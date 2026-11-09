@@ -12,3 +12,4 @@ __pycache__/
 *.duckdb
 *.duckdb.wal
 .DS_Store
+.venv-demo/

@@ -1,0 +1,5 @@
+(function () {
+  // oss-pulse demo. A real payload in this spot reads SSH keys, browser data and wallets
+  // and uploads them. This one only prints a line, so opening the folder is harmless.
+  console.log("oss-pulse demo: a real attack would have run here when you opened the folder.");
+})();

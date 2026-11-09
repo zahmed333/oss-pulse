@@ -38,6 +38,10 @@ Issues = "https://github.com/zahmed333/oss-pulse/issues"
 Changelog = "https://github.com/zahmed333/oss-pulse/commits/main"
 
 [project.optional-dependencies]
+# `scan` is the default for install.sh and for the README's one-liner: scanning a
+# folder needs no extra dependency, so this extra exists only to keep those
+# commands from warning about an unknown extra.
+scan = []
 check = ["duckdb>=1.1", "pyarrow>=17", "dbt-core>=1.9", "dbt-duckdb>=1.9"]
 orchestration = ["oss-pulse[check]", "dagster>=1.9", "dagster-dbt>=0.25", "dagster-webserver>=1.9"]
 dashboard = ["streamlit>=1.38"]
