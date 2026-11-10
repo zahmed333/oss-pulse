@@ -66,12 +66,21 @@ def render_scan(findings, folder: str, suppressed: int = 0, colour: bool = False
         for f in findings
     ]
     verdict = worst(r.verdict for r in rows)
-    runs_on_open = any(
-        f.category == "auto-execution" and VERDICT_OF_SEVERITY[f.severity] == HOLD for f in findings
-    )
-    if verdict == HOLD and runs_on_open:
+    held = [f for f in findings if VERDICT_OF_SEVERITY[f.severity] == HOLD]
+    held_categories = {f.category for f in held}
+    runs_on_open = any(f.rule_id.startswith("AUTO-VSCODE") for f in held)
+    if runs_on_open:
         headline = "Don't open this folder in VS Code, and don't install its dependencies."
         reason = "It is set up to run code as soon as it is opened or installed."
+    elif "auto-execution" in held_categories:
+        headline = "Don't install this folder's dependencies."
+        reason = "Installing them runs code on your machine before you have read it."
+    elif held and held_categories <= {"ci-cd"}:
+        headline = "Don't merge or run these workflows as they are."
+        reason = "A pull request could run its own code with this repository's secrets."
+    elif held and held_categories <= {"typosquatting"}:
+        headline = "Don't install from this folder: a dependency name imitates a popular package."
+        reason = "Check each name below against the package you meant."
     elif verdict == HOLD:
         headline = "Don't run or install this code until the findings below are explained."
         reason = "It contains code that hides, steals or downloads more code."
@@ -88,7 +97,13 @@ def render_scan(findings, folder: str, suppressed: int = 0, colour: bool = False
     lines = [f"{word(verdict, colour)}{headline}", f"       {reason}", ""]
     if rows:
         lines += _rows(rows, colour) + [""]
-    if verdict == HOLD:
+    if held and held_categories <= {"ci-cd", "typosquatting"}:
+        steps = [
+            "Fix the lines above before this reaches your main branch or anyone's machine.",
+            f"Each rule, and the incident it comes from, is explained at {RULES}",
+        ]
+        lines += ["next", *_numbered(steps), ""]
+    elif verdict == HOLD:
         steps = [
             "Delete the folder, or open it only in Restricted Mode: when VS Code asks "
             'whether you trust the authors, choose "No, I don\'t trust the authors".',

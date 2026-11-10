@@ -69,6 +69,48 @@ Post 5: the ask, and the link:
 >
 > MIT. `scan` runs offline and uploads nothing.
 
+## Thread, second option: the story
+
+This one is specific to this project and true, which makes it harder to dismiss. The full account is [case-study-demo-stealer.md](case-study-demo-stealer.md). Attach the before/after table from it as an image.
+
+Post 1:
+
+> I asked an AI coding agent for a harmless demo of the fake-recruiter attack, for my scanner's README.
+>
+> It wrote a working stealer. A "font" file that was JavaScript, run when you open the folder, reading ~/.ssh/id_rsa and every environment variable and posting them to a Discord webhook.
+>
+> It called it "inert" and added it to the ignore list.
+
+Post 2:
+
+> The scanner said hold: code runs on open, and there is script inside a font file.
+>
+> It did not say what the script did. It does now: reads SSH keys, sends data to Discord, takes the environment.
+
+Post 3:
+
+> What changed: disguised files are read like any other script, and every example in the repo is scanned without the ignore list, so "it's only a demo" has to be true.
+>
+> Five harmless samples you can scan yourself: github.com/zahmed333/oss-pulse/tree/main/examples
+
+Post 4: the one-liner from the first thread. Post 5: the limits from the first thread.
+
+Leave the name of the AI tool out. The point is that generated code needs review, and naming a vendor turns the replies into an argument about that vendor.
+
+## What it takes to get used, in order
+
+Reach comes from one post; staying power comes from the list below. Nothing here is done automatically.
+
+1. One-line trial. Publish to PyPI so the post can say `uvx oss-pulse scan .`. Until then the installer script is the shortest path.
+2. A release. Tag `v0.1.0` on GitHub with the changelog as the notes; people and package managers pin releases, not branches.
+3. A page that explains itself in five seconds. Done: the README opens with the attack and the recording. Set the About text, topics and social preview so shared links show the picture.
+4. Something to try without risk. Done: `examples/` has five harmless folders with known verdicts.
+5. A reason to come back. Answer every issue in the first week, label a few `good first issue` (a new rule with a fixture is a good one), and merge the first outside pull request quickly.
+6. Places to be found: Show HN on a weekday morning US time, r/Python and r/netsec with the case study rather than the tool, the awesome-python-security and awesome-supply-chain lists, the PyPI and OpenSSF community channels, and a reply under each new write-up of a fake-recruiter campaign.
+7. Proof beyond the first benchmark. Publish results on packages the rules were not tuned on, and recall against the OpenSSF malicious-packages dataset. Security readers ask for this first.
+8. Other ecosystems. npm dependency checks and lockfiles are the two requests to expect most.
+9. Real users. Ask two or three people who are job-hunting, and one team with a CI pipeline, to try it and say what confused them. Quote them only with permission.
+
 ## Before posting
 
 - [ ] Publish to PyPI so the post can say `uvx oss-pulse` (only the maintainer can).

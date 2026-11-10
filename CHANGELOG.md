@@ -14,6 +14,9 @@ First public version (0.1.0, not yet on PyPI).
 - CI outputs for any system: JUnit XML, SARIF 2.1.0, native log annotations, and one pull-request comment on GitHub and Azure DevOps. Templates for Azure Pipelines and GitLab, a GitHub Action and a pre-commit hook.
 - Endpoints can point at mirrors or GitHub Enterprise Server; `--skip` avoids services a network blocks.
 
+- `examples/`: five harmless folders with known verdicts (fake take-home, npm install hook, lookalike names, a hijackable GitHub workflow, a clean project).
+- The verdict line now matches what was found: "Don't install this folder's dependencies" for install hooks, "Don't merge or run these workflows" for CI findings, and a lookalike-name message for typosquats.
+
 ### Security
 
 - A scanned folder can't configure its own scan: an `.osspulseignore` inside it is reported, not applied.

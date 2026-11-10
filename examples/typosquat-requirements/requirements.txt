@@ -1,0 +1,3 @@
+flask==3.0.3
+reqeusts==0.0.0.dev0+oss.pulse.demo
+python-dateutils==0.0.0.dev0+oss.pulse.demo

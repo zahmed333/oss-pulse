@@ -7,8 +7,6 @@ tests/test_supply_chain.py
 # The customer task suite writes inert trap fixtures, such as a curl | sh dev container.
 scripts/cx_tasks.sh
 tests/test_artifact_precision.py
-# The demo folder is an inert copy of the attack, shown in the README recording.
-examples/take-home/.vscode/tasks.json
-examples/take-home/.vscode/assets/font-awesome.woff2
-examples/take-home/package.json
+# The example folders are harmless copies of attack shapes (examples/README.md).
+examples/*
 tests/test_real_world_payloads.py

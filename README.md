@@ -61,6 +61,8 @@ Try it on the inert sample in this repository, which is the recording at the top
 oss-pulse scan examples/take-home
 ```
 
+There are four more harmless samples in [`examples/`](examples): an npm install hook, lookalike package names, a GitHub Actions workflow a pull request can take over, and a clean project. One catch from this repository's own history is written up in [the demo that was a working stealer](docs/case-study-demo-stealer.md).
+
 **Check your project's dependencies too:**
 
 ```sh

@@ -1,0 +1,8 @@
+{
+  "name": "analytics-widget",
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "node -e \"eval(atob('Y29uc29sZS5sb2coJ29zcy1wdWxzZSBkZW1vJyk='))\"",
+    "test": "node --test"
+  }
+}
